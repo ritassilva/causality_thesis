@@ -1,0 +1,76 @@
+{
+  "PC": {
+    "alpha": 0.05,
+    "indep_test": "fisherz",
+    "uc_rule": 0
+  },
+  "FCI": {
+    "alpha": 0.05,
+    "independence_test_method": "fisherz",
+    "depth": -1,
+    "max_path_length": -1
+  },
+  "GES": {
+    "score_func": "local_score_BIC",
+    "lambda_value": 1.0,
+    "maxP": null
+  },
+  "GRaSP": {
+    "depth": 3,
+    "score_func": "local_score_BIC_from_cov",
+    "lambda_value": 2.0
+  },
+  "SCORE": {
+    "alpha": 0.05,
+    "eta_G": 0.001,
+    "eta_H": 0.001,
+    "n_splines": 10
+  },
+  "NoGAM": {
+    "alpha": 0.05,
+    "eta_G": 0.001,
+    "eta_H": 0.001,
+    "ridge_alpha": 0.01,
+    "n_splines": 10
+  },
+  "DAS": {
+    "alpha": 0.05,
+    "das_cutoff": 0.05,
+    "eta_G": 0.001,
+    "eta_H": 0.001,
+    "max_parents": 20
+  },
+  "NOTEARS": {
+    "lambda1": 0.1,
+    "max_iter": 100
+  },
+  "DAGMA_Linear": {
+    "lambda1": 0.03,
+    "T": 5,
+    "lr": 0.0003,
+    "mu_factor": 0.1
+  },
+  "DAGMA_Nonlinear": {
+    "lambda1": 0.02,
+    "lambda2": 0.005,
+    "hidden_dim": 16,
+    "lr": 0.0002,
+    "T": 4,
+    "iter_scale": 0.0625
+  },
+  "GOLEM": {
+    "lambda_1": 0.02,
+    "lambda_2": 5.0,
+    "learning_rate": 0.001,
+    "num_iter": 100000,
+    "equal_variances": true
+  },
+  "GraNDAG": {
+    "hidden_dim": 10,
+    "hidden_num": 2,
+    "lr": 0.001,
+    "model_name": "NonLinGaussANM",
+    "use_pns": false
+  },
+  "AVICI": {}
+}

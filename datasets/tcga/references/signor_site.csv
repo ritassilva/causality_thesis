@@ -1,0 +1,10 @@
+source,target,effect,line_in_figure,note
+EGFR,PIK3R1,up-regulates,solid,
+KDR,PIK3R1,up-regulates,solid,
+PIK3R1,PIK3CA,up-regulates,solid,seta nos dois sentidos: complexo PI3K (p85a/p110a)
+PIK3CA,PIK3R1,up-regulates,solid,seta nos dois sentidos: complexo PI3K (p85a/p110a)
+NOTCH1,ZMIZ1,up-regulates,solid,seta nos dois sentidos
+ZMIZ1,NOTCH1,up-regulates,solid,seta nos dois sentidos
+PTEN,PIK3CA,down-regulates,dashed,provavelmente indirecta (via PIP3); confirmar na legenda do SIGNOR
+TP53,EGFR,up-regulates,dashed,tracejado claro; confirmar na legenda do SIGNOR
+NOTCH1,TCF12,up-regulates,dashed,tracejado claro; confirmar na legenda do SIGNOR

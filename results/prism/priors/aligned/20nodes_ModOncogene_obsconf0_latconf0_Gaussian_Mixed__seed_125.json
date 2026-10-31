@@ -1,0 +1,63 @@
+{
+  "bootstrap": {
+    "note": "Subsampling without replacement: duplicated rows distort the kernel Stein estimator.",
+    "repetitions": 25,
+    "replace": false,
+    "seed": 20260919,
+    "subsample_size": 1000
+  },
+  "config_sha256": "d93c4d2ea01cea70f7256c27b53cb84a566621d0da62450c6b5c34fa6c113451",
+  "data_file": "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed__seed_125.npz",
+  "data_sha256": "0dba5662c9cda0b350dd036ea8b134f54e92d7ebb342902d1f6c6ca9b589d43e",
+  "dataset_seed": 125,
+  "family": "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed",
+  "glasso_config": {
+    "alpha_scale_fractions": [
+      0.0001,
+      0.0002,
+      0.0005,
+      0.001,
+      0.002,
+      0.005,
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.5,
+      1.0
+    ],
+    "cv_folds": 5,
+    "cv_seed": 20260911,
+    "glasso_max_iter": 1000,
+    "glasso_tol": 0.0001,
+    "note": "Copied from prior_decomposition_final_checks/design.json: label-free CV, one-standard-error rule, refittable on the full sample.",
+    "representation": "correlation"
+  },
+  "glasso_errors_json": "[]",
+  "glasso_selection": {
+    "glasso_alpha": 0.007314434045560588,
+    "glasso_density": 0.6421052631578947,
+    "glasso_fraction": 0.01,
+    "glasso_refit_adjusted": false
+  },
+  "order_check": null,
+  "status": "finished",
+  "stein": {
+    "eta_G": 0.001,
+    "eta_H": 0.001,
+    "note": "Order on the raw (unstandardised) observations, as order_raw in prior_decomposition round 1.",
+    "order_data": "raw"
+  },
+  "timings_s": {
+    "bootstrap_s": 448.69720499101095,
+    "glasso_s": 275.38073521410115,
+    "hessian_s": 76.89492369885556,
+    "order_s": 78.5081304970663
+  },
+  "versions": {
+    "dodiscover": "0.0.0.dev0",
+    "numpy": "1.26.4",
+    "sklearn": "1.9.0"
+  }
+}

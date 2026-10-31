@@ -1,0 +1,8 @@
+{
+  "n_nodes": 20,
+  "n_samples": 2000,
+  "seed": 42,
+  "graph_type": "erdos_renyi",
+  "edge_probability": 0.3,
+  "mechanism": "linear"
+}

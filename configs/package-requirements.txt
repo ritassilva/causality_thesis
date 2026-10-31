@@ -1,0 +1,2 @@
+causalgen @ git+https://github.com/ritassilva/causalgen.git@64ac633e36af672b396577b86591dd7f31ab893e
+prism @ git+https://github.com/ritassilva/PRISM.git@2d610301319cd52d7736cbe5ac8d76eda6fe265a

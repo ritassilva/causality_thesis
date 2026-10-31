@@ -1,0 +1,63 @@
+{
+  "bootstrap": {
+    "note": "Subsampling without replacement: duplicated rows distort the kernel Stein estimator.",
+    "repetitions": 25,
+    "replace": false,
+    "seed": 20260919,
+    "subsample_size": 1000
+  },
+  "config_sha256": "d93c4d2ea01cea70f7256c27b53cb84a566621d0da62450c6b5c34fa6c113451",
+  "data_file": "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed__seed_19.npz",
+  "data_sha256": "83b1db94e6b9c1c316af393647fd0236ac9f4a2553ebd78808cfcd4a8a851927",
+  "dataset_seed": 19,
+  "family": "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed",
+  "glasso_config": {
+    "alpha_scale_fractions": [
+      0.0001,
+      0.0002,
+      0.0005,
+      0.001,
+      0.002,
+      0.005,
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.5,
+      1.0
+    ],
+    "cv_folds": 5,
+    "cv_seed": 20260911,
+    "glasso_max_iter": 1000,
+    "glasso_tol": 0.0001,
+    "note": "Copied from prior_decomposition_final_checks/design.json: label-free CV, one-standard-error rule, refittable on the full sample.",
+    "representation": "correlation"
+  },
+  "glasso_errors_json": "[{\"fold\": 0, \"fraction\": 0.0001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 0, \"fraction\": 0.0002, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 0, \"fraction\": 0.0005, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 0, \"fraction\": 0.001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 1, \"fraction\": 0.0001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 2, \"fraction\": 0.0001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 2, \"fraction\": 0.0002, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 2, \"fraction\": 0.0005, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 2, \"fraction\": 0.002, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 3, \"fraction\": 0.0001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 4, \"fraction\": 0.0001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 4, \"fraction\": 0.0002, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 4, \"fraction\": 0.0005, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fold\": 4, \"fraction\": 0.005, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"cv\", \"type\": \"FloatingPointError\"}, {\"fraction\": 0.0001, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"full\", \"type\": \"FloatingPointError\"}, {\"fraction\": 0.0005, \"message\": \"Non SPD result: the system is too ill-conditioned for this solver. The system is too ill-conditioned for this solver\", \"stage\": \"full\", \"type\": \"FloatingPointError\"}]",
+  "glasso_selection": {
+    "glasso_alpha": 0.008069091397625069,
+    "glasso_density": 0.7736842105263158,
+    "glasso_fraction": 0.01,
+    "glasso_refit_adjusted": false
+  },
+  "order_check": null,
+  "status": "finished",
+  "stein": {
+    "eta_G": 0.001,
+    "eta_H": 0.001,
+    "note": "Order on the raw (unstandardised) observations, as order_raw in prior_decomposition round 1.",
+    "order_data": "raw"
+  },
+  "timings_s": {
+    "bootstrap_s": 480.0384868150577,
+    "glasso_s": 1790.8732151119038,
+    "hessian_s": 80.1035081599839,
+    "order_s": 77.82816002517939
+  },
+  "versions": {
+    "dodiscover": "0.0.0.dev0",
+    "numpy": "1.26.4",
+    "sklearn": "1.9.0"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "bootstrap": {
+    "repetitions": 25,
+    "replace": false,
+    "seed": 20260919,
+    "subsample_size": 1000
+  },
+  "families": [
+    "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
+    "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed",
+    "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed"
+  ],
+  "glasso": {
+    "alpha_scale_fractions": [
+      0.0001,
+      0.0002,
+      0.0005,
+      0.001,
+      0.002,
+      0.005,
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.5,
+      1.0
+    ],
+    "cv_folds": 5,
+    "cv_seed": 20260911,
+    "glasso_max_iter": 1000,
+    "glasso_tol": 0.0001,
+    "representation": "correlation"
+  },
+  "hpo": {
+    "enqueue": [
+      {
+        "alpha": 1.0,
+        "direction": "binary",
+        "gate": "linear",
+        "lambda_d": 0.06,
+        "lambda_e": 0.015,
+        "lambda_s": 0.0003125,
+        "q_G": 2.1,
+        "q_H": 2.1
+      },
+      {
+        "alpha": 1.0,
+        "direction": "binary",
+        "gate": "linear",
+        "lambda_d": 0.01,
+        "lambda_e": 0.0025,
+        "lambda_s": 5.208e-05,
+        "q_G": 2.1,
+        "q_H": 2.1
+      }
+    ],
+    "fit_trace_every": 250,
+    "h_source": "raw",
+    "n_startup_trials": 10,
+    "n_trials": 400,
+    "n_validation_candidates": 3,
+    "space": {
+      "alpha": {
+        "high": 1.0,
+        "low": 0.0,
+        "type": "float"
+      },
+      "direction": {
+        "choices": [
+          "binary",
+          "bootstrap"
+        ],
+        "type": "categorical"
+      },
+      "gate": {
+        "choices": [
+          "none",
+          "linear",
+          "floor20percent"
+        ],
+        "type": "categorical"
+      },
+      "lambda_d": {
+        "high": 3.0,
+        "low": 0.0001,
+        "type": "float_log"
+      },
+      "lambda_e": {
+        "high": 0.3,
+        "low": 0.0001,
+        "type": "float_log"
+      },
+      "lambda_s": {
+        "high": 0.01,
+        "low": 1e-06,
+        "type": "float_log"
+      },
+      "q_G": {
+        "high": 10.0,
+        "low": 0.1,
+        "type": "float_log"
+      },
+      "q_H": {
+        "high": 10.0,
+        "low": 0.1,
+        "type": "float_log"
+      }
+    },
+    "validation_acyclic_fraction": 1.0,
+    "selection_rule": "Validate the top three completed candidates from this single study; require complete coverage and an acyclic threshold, then maximize macro F0.5.",
+    "multivariate": true
+  },
+  "model_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "sample_size": 2000,
+  "schema_version": 2,
+  "search_dataset_seeds": [
+    13,
+    21,
+    29,
+    32,
+    44
+  ],
+  "stein": {
+    "eta_G": 0.001,
+    "eta_H": 0.001,
+    "order_data": "raw"
+  },
+  "test_dataset_seeds": [
+    19,
+    47,
+    50,
+    52,
+    71,
+    75,
+    77,
+    102,
+    125,
+    158,
+    222,
+    237,
+    308,
+    402,
+    603
+  ],
+  "training": {
+    "T": 6,
+    "hidden_dim": 8,
+    "lambda2": 0.0005442554166274262,
+    "lr": 0.0010429441606122837,
+    "max_iter": 5000,
+    "warm_iter": 3125
+  },
+  "validation_dataset_seeds": [
+    64,
+    85,
+    90,
+    107,
+    249
+  ],
+  "model": "PRISM",
+  "results": "Stored analyses contain the final selected-model results. Executing this configuration performs a new single search; it does not replay the original optimization trajectory."
+}

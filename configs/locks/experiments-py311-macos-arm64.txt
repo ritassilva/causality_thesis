@@ -1,0 +1,462 @@
+# Resolved for CPython 3.11 on macOS ARM64.
+alembic==1.20.1
+    # via optuna
+anyio==4.15.1
+    # via
+    #   httpx
+    #   jupyter-server
+appnope==1.0.0
+    # via ipykernel
+argon2-cffi==25.1.0
+    # via jupyter-server
+argon2-cffi-bindings==26.1.0
+    # via argon2-cffi
+arrow==1.4.0
+    # via isoduration
+asttokens==3.0.2
+    # via stack-data
+async-lru==2.4.0
+    # via jupyterlab
+attrs==26.1.0
+    # via
+    #   jsonschema
+    #   referencing
+babel==2.18.0
+    # via jupyterlab-server
+beautifulsoup4==4.15.0
+    # via nbconvert
+bleach==6.4.0
+    # via nbconvert
+causal-learn==0.1.4.5
+    # via -r requirements-experiments.txt
+causaldisco==0.2.2
+    # via -r requirements-analysis.txt
+causalgen @ git+https://github.com/ritassilva/causalgen.git@64ac633e36af672b396577b86591dd7f31ab893e
+    # via -r configs/package-requirements.txt
+certifi==2026.10.23
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
+cffi==2.1.1
+    # via argon2-cffi-bindings
+charset-normalizer==3.5.2
+    # via requests
+cloudpickle==3.1.2
+    # via joblib
+colorlog==6.12.0
+    # via optuna
+comm==0.2.3
+    # via ipykernel
+contourpy==1.3.3
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
+dagma==1.1.1
+    # via -r requirements-experiments.txt
+debugpy==1.8.22
+    # via ipykernel
+defusedxml==0.7.1
+    # via nbconvert
+dodiscover @ git+https://github.com/py-why/dodiscover.git@6e64456198a5b66e515f250a8f4b143ebc31c9a6
+    # via -r requirements-experiments.txt
+executing==2.3.0
+    # via stack-data
+fastjsonschema==2.22.2
+    # via nbformat
+filelock==4.2.5
+    # via torch
+fonttools==4.68.0
+    # via matplotlib
+formulaic==1.2.2
+    # via statsmodels
+fqdn==1.6.0
+    # via jsonschema
+fsspec==2026.9.0
+    # via torch
+gcastle==1.0.4
+    # via -r requirements-experiments.txt
+graphviz==0.21
+    # via causal-learn
+h11==0.16.0
+    # via httpcore
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via jupyterlab
+idna==3.20
+    # via
+    #   anyio
+    #   httpx
+    #   jsonschema
+    #   requests
+igraph==1.0.0
+    # via dagma
+interface-meta==2.0.1
+    # via formulaic
+ipykernel==6.30.1
+    # via
+    #   -r requirements-analysis.txt
+    #   jupyterlab
+ipython==9.18.0
+    # via ipykernel
+ipython-pygments-lexers==1.1.1
+    # via ipython
+isoduration==20.11.0
+    # via jsonschema
+jedi==0.20.1
+    # via ipython
+jinja2==3.1.6
+    # via
+    #   -r requirements-analysis.txt
+    #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
+    #   nbconvert
+    #   torch
+joblib==1.6.0
+    # via scikit-learn
+json5==0.17.3
+    # via jupyterlab-server
+jsonpointer==3.6
+    # via jsonschema
+jsonschema==4.26.0
+    # via
+    #   jupyter-events
+    #   jupyterlab-server
+    #   nbformat
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+jupyter-client==8.10.0
+    # via
+    #   ipykernel
+    #   jupyter-server
+    #   nbclient
+jupyter-core==5.9.1
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-server
+    #   jupyterlab
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+jupyter-events==0.12.1
+    # via jupyter-server
+jupyter-lsp==2.3.1
+    # via jupyterlab
+jupyter-server==2.21.1
+    # via
+    #   jupyter-lsp
+    #   jupyterlab
+    #   jupyterlab-server
+    #   notebook-shim
+jupyter-server-terminals==0.5.4
+    # via jupyter-server
+jupyterlab==4.4.10
+    # via -r requirements-analysis.txt
+jupyterlab-pygments==0.3.0
+    # via nbconvert
+jupyterlab-server==2.28.1
+    # via jupyterlab
+kiwisolver==1.5.1
+    # via matplotlib
+lark==1.3.1
+    # via rfc3987-syntax
+mako==1.4.3
+    # via alembic
+markupsafe==3.0.4
+    # via
+    #   jinja2
+    #   mako
+    #   nbconvert
+matplotlib==3.10.9
+    # via
+    #   -r requirements-analysis.txt
+    #   causal-learn
+    #   causalgen
+    #   gcastle
+matplotlib-inline==0.2.2
+    # via
+    #   ipykernel
+    #   ipython
+mistune==3.4.0
+    # via nbconvert
+momentchi2==0.1.8
+    # via causal-learn
+mpmath==1.3.0
+    # via sympy
+narwhals==2.28.0
+    # via formulaic
+nbclient==0.10.2
+    # via
+    #   -r requirements-analysis.txt
+    #   nbconvert
+nbconvert==7.17.2
+    # via jupyter-server
+nbformat==5.10.4
+    # via
+    #   -r requirements-analysis.txt
+    #   jupyter-server
+    #   nbclient
+    #   nbconvert
+nest-asyncio==1.6.0
+    # via ipykernel
+networkx==3.6.1
+    # via
+    #   -r requirements-analysis.txt
+    #   causal-learn
+    #   causalgen
+    #   dodiscover
+    #   gcastle
+    #   torch
+notebook-shim==0.2.4
+    # via jupyterlab
+numpy==1.26.4
+    # via
+    #   -r requirements-analysis.txt
+    #   causal-learn
+    #   causaldisco
+    #   causalgen
+    #   contourpy
+    #   dagma
+    #   dodiscover
+    #   formulaic
+    #   gcastle
+    #   matplotlib
+    #   momentchi2
+    #   optuna
+    #   pandas
+    #   patsy
+    #   prism
+    #   pygam
+    #   scikit-learn
+    #   scipy
+    #   statsmodels
+optuna==4.9.0
+    # via -r requirements-experiments.txt
+overrides==7.7.0
+    # via jupyter-server
+packaging==26.3
+    # via
+    #   ipykernel
+    #   jupyter-events
+    #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
+    #   matplotlib
+    #   nbconvert
+    #   optuna
+    #   patsy
+    #   statsmodels
+pandas==2.3.3
+    # via
+    #   -r requirements-analysis.txt
+    #   causal-learn
+    #   causalgen
+    #   dodiscover
+    #   formulaic
+    #   gcastle
+    #   statsmodels
+pandocfilters==1.5.1
+    # via nbconvert
+parso==0.8.7
+    # via jedi
+patsy==1.0.3
+    # via statsmodels
+pexpect==4.9.0
+    # via ipython
+pillow==13.0.0
+    # via matplotlib
+platformdirs==4.14.0
+    # via jupyter-core
+prism @ git+https://github.com/ritassilva/PRISM.git@2d610301319cd52d7736cbe5ac8d76eda6fe265a
+    # via -r configs/package-requirements.txt
+progressbar2==4.6.0
+    # via pygam
+prometheus-client==0.26.0
+    # via jupyter-server
+prompt-toolkit==3.0.53
+    # via ipython
+psutil==7.2.2
+    # via
+    #   ipykernel
+    #   ipython
+ptyprocess==0.7.0
+    # via
+    #   pexpect
+    #   terminado
+pure-eval==0.2.4
+    # via stack-data
+pycparser==3.12
+    # via cffi
+pydot==4.0.1
+    # via causal-learn
+pygam==0.12.0
+    # via dodiscover
+pygments==2.21.0
+    # via
+    #   ipython
+    #   ipython-pygments-lexers
+    #   nbconvert
+pyparsing==3.3.3
+    # via
+    #   matplotlib
+    #   pydot
+python-dateutil==3.0.0
+    # via
+    #   arrow
+    #   jupyter-client
+    #   matplotlib
+    #   pandas
+python-json-logger==4.2.0
+    # via jupyter-events
+python-utils==4.1.4
+    # via progressbar2
+pytz==2026.6
+    # via pandas
+pyyaml==6.0.3
+    # via
+    #   jupyter-events
+    #   optuna
+pyzmq==27.2.0
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-server
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+    #   jupyter-events
+requests==2.34.2
+    # via jupyterlab-server
+rfc3339-validator==0.1.4
+    # via
+    #   jsonschema
+    #   jupyter-events
+rfc3986-validator==0.1.1
+    # via
+    #   jsonschema
+    #   jupyter-events
+rfc3987-syntax==1.1.0
+    # via jsonschema
+rpds-py==2026.9.1
+    # via
+    #   jsonschema
+    #   referencing
+scikit-learn==1.8.0
+    # via
+    #   -r requirements-analysis.txt
+    #   causal-learn
+    #   causaldisco
+    #   dodiscover
+    #   gcastle
+    #   prism
+scipy==1.11.4
+    # via
+    #   -r requirements-analysis.txt
+    #   causal-learn
+    #   causaldisco
+    #   dagma
+    #   dodiscover
+    #   formulaic
+    #   gcastle
+    #   momentchi2
+    #   pygam
+    #   scikit-learn
+    #   statsmodels
+send2trash==2.1.0
+    # via jupyter-server
+setuptools==84.2.1
+    # via jupyterlab
+six==1.17.0
+    # via
+    #   python-dateutil
+    #   rfc3339-validator
+soupsieve==2.10
+    # via beautifulsoup4
+sqlalchemy==2.1.6
+    # via
+    #   alembic
+    #   optuna
+stack-data==0.6.3
+    # via ipython
+statsmodels==0.15.0
+    # via causal-learn
+sympy==1.13.1
+    # via torch
+terminado==0.18.1
+    # via
+    #   jupyter-server
+    #   jupyter-server-terminals
+texttable==1.7.2
+    # via igraph
+threadpoolctl==3.7.0
+    # via scikit-learn
+tinycss2==1.5.1
+    # via bleach
+torch==2.5.1
+    # via
+    #   -r requirements-experiments.txt
+    #   dagma
+    #   prism
+tornado==6.6
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-server
+    #   jupyterlab
+    #   terminado
+tqdm==4.70.1
+    # via
+    #   causal-learn
+    #   dagma
+    #   gcastle
+    #   optuna
+traitlets==5.16.1
+    # via
+    #   ipykernel
+    #   ipython
+    #   jupyter-client
+    #   jupyter-core
+    #   jupyter-events
+    #   jupyter-server
+    #   jupyterlab
+    #   matplotlib-inline
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+typing-extensions==4.16.0
+    # via
+    #   alembic
+    #   anyio
+    #   beautifulsoup4
+    #   formulaic
+    #   ipython
+    #   jupyter-client
+    #   python-utils
+    #   referencing
+    #   sqlalchemy
+    #   torch
+tzdata==2026.6
+    # via
+    #   arrow
+    #   pandas
+    #   python-dateutil
+uri-template==1.3.0
+    # via jsonschema
+urllib3==2.8.0
+    # via requests
+wcwidth==0.9.4
+    # via prompt-toolkit
+webcolors==25.10.0
+    # via jsonschema
+webencodings==0.6.1
+    # via
+    #   bleach
+    #   tinycss2
+websocket-client==1.9.2
+    # via jupyter-server
+wrapt==2.5.2
+    # via formulaic

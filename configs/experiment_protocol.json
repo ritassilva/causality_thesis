@@ -1,0 +1,109 @@
+{
+  "excluded_families": [
+    "ModSubtype"
+  ],
+  "model_seeds": {
+    "benchmark": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "evaluation": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "model_selection": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "ablation": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "scalability": [
+      0,
+      1,
+      2
+    ],
+    "sachs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "tcga": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "benchmark_control": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ]
+  },
+  "untuned_thresholds": {
+    "AVICI": 0.5,
+    "NOTEARS": 0.3,
+    "GOLEM": 0.3,
+    "DAGMA_Linear": 0.3,
+    "DAGMA_Nonlinear": 0.3,
+    "DirectLiNGAM": 0.0
+  }
+}

@@ -1,0 +1,13 @@
+group,source_gene,source_kind,target_gene,target_kind,effect,line,evidence,citation,note
+signor,EGFR,expr,PIK3R1,expr,up-regulates,solid,"curada no SIGNOR; o EGFR activado recruta o p85a (PIK3R1)",SIGNOR (site),nível da proteína
+signor,KDR,expr,PIK3R1,expr,up-regulates,solid,"curada no SIGNOR; o VEGFR2 activa a PI3K através do p85a",SIGNOR (site),nível da proteína; medido em células endoteliais
+signor,PIK3R1,expr,PIK3CA,expr,up-regulates,solid,"curada no SIGNOR; subunidades do mesmo complexo PI3K (estrutura: Huang et al. 2007 Science)",SIGNOR (site),seta nos dois sentidos no SIGNOR
+signor,PIK3CA,expr,PIK3R1,expr,up-regulates,solid,"curada no SIGNOR; subunidades do mesmo complexo PI3K (estrutura: Huang et al. 2007 Science)",SIGNOR (site),seta nos dois sentidos no SIGNOR
+signor,NOTCH1,expr,ZMIZ1,expr,up-regulates,solid,"curada no SIGNOR; ligação directa ZMIZ1-NOTCH1 (Pinnell et al. 2015 Immunity)",SIGNOR (site),seta nos dois sentidos no SIGNOR; medido em células T
+signor,ZMIZ1,expr,NOTCH1,expr,up-regulates,solid,"curada no SIGNOR; o ZMIZ1 é co-activador do NOTCH1 (Pinnell et al. 2015 Immunity)",SIGNOR (site),seta nos dois sentidos no SIGNOR; medido em células T
+signor,PTEN,expr,PIK3CA,expr,down-regulates,dashed,"curada no SIGNOR como indirecta; o PTEN desfosforila o PIP3, produto da PI3K (Maehama & Dixon 1998 JBC)",SIGNOR (site),indirecta (via PIP3)
+signor,TP53,expr,EGFR,expr,up-regulates,dashed,"curada no SIGNOR; o p53 activa o promotor do EGFR (Deb et al. 1994 Oncogene)",SIGNOR (site),regulação transcricional
+signor,NOTCH1,expr,TCF12,expr,up-regulates,dashed,"curada no SIGNOR",SIGNOR (site),ver o PMID no site do SIGNOR
+cis,NF1,mut,NF1,expr,down-regulates,,"alterações do NF1 associadas a mRNA de NF1 mais baixo no glioblastoma",Verhaak et al. 2010 Cancer Cell,parte do efeito vem de deleções
+cis,ATRX,mut,ATRX,expr,down-regulates,,"mutações do ATRX com perda de expressão em astrocitomas (proteína); NMD para o mRNA",Liu et al. 2012 Acta Neuropathol; Lindeboom et al. 2016 Nat Genet,
+cis,RB1,mut,RB1,expr,down-regulates,,"mecanismo geral: mutações truncantes -> degradação do mRNA por NMD",Lindeboom et al. 2016 Nat Genet,sem estudo específico de glioma

@@ -1,0 +1,13 @@
+file	dataset	subtype	n_participants	n_columns	n_constant_columns	constant_columns
+mut_expr70_all.tsv	mut_expr70	all	665	70	0	
+mut_expr70_glioblastoma.tsv	mut_expr70	glioblastoma	242	70	5	IDH1_mut,CIC_mut,NOTCH1_mut,IDH2_mut,FUBP1_mut
+mut_expr70_astrocytoma.tsv	mut_expr70	astrocytoma	258	70	2	RB1_mut,EGFR_mut
+mut_expr70_oligodendroglioma.tsv	mut_expr70	oligodendroglioma	165	70	1	STAG2_mut
+mut35_all.tsv	mut35	all	665	35	0	
+mut35_glioblastoma.tsv	mut35	glioblastoma	242	35	5	IDH1_mut,CIC_mut,NOTCH1_mut,IDH2_mut,FUBP1_mut
+mut35_astrocytoma.tsv	mut35	astrocytoma	258	35	2	RB1_mut,EGFR_mut
+mut35_oligodendroglioma.tsv	mut35	oligodendroglioma	165	35	1	STAG2_mut
+expr35_all.tsv	expr35	all	665	35	0	
+expr35_glioblastoma.tsv	expr35	glioblastoma	242	35	0	
+expr35_astrocytoma.tsv	expr35	astrocytoma	258	35	0	
+expr35_oligodendroglioma.tsv	expr35	oligodendroglioma	165	35	0	

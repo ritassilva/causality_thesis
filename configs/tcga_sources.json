@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "filename": "GBMLGG-TP.final_analysis_set.maf.txt",
+      "url": "https://gdac.broadinstitute.org/runs/analyses__2016_01_28/reports/cancer/GBMLGG-TP/MutSigNozzleReport2CV/GBMLGG-TP.final_analysis_set.maf",
+      "sha256": "d61487314c8105216d083602da1109ef783805fd982d1d98f3a28ff8162c1051",
+      "download_sha256": "d61487314c8105216d083602da1109ef783805fd982d1d98f3a28ff8162c1051",
+      "archive_member": null
+    },
+    {
+      "filename": "GBMLGG.clin.merged.picked.txt",
+      "url": "https://gdac.broadinstitute.org/runs/stddata__2016_01_28/data/GBMLGG/20160128/gdac.broadinstitute.org_GBMLGG.Clinical_Pick_Tier1.Level_4.2016012800.0.0.tar.gz",
+      "sha256": "66d1cb7577a4a1e7516d7aef4833a52e234ed2e3756f1b4c794ad986971f2411",
+      "download_sha256": "8992b4bd1e8dcd02e2d35bccfba34d58844796332bca430e50b51746abdef34d",
+      "archive_member": "gdac.broadinstitute.org_GBMLGG.Clinical_Pick_Tier1.Level_4.2016012800.0.0/GBMLGG.clin.merged.picked.txt"
+    },
+    {
+      "filename": "sig_genes.txt",
+      "url": "https://gdac.broadinstitute.org/runs/analyses__2016_01_28/reports/cancer/GBMLGG-TP/MutSigNozzleReport2CV/sig_genes.txt",
+      "sha256": "e708be5b50604a01e8f653ff4d6b95c8f948bd5e1c1517e7a8aa4bec31862195",
+      "download_sha256": "e708be5b50604a01e8f653ff4d6b95c8f948bd5e1c1517e7a8aa4bec31862195",
+      "archive_member": null
+    },
+    {
+      "filename": "SIMPLIFIED_CLASSIFICATION_TCGA_2016_2021.csv",
+      "url": "https://raw.githubusercontent.com/sysbiomed/MONET/4361ed6780c1f40d6a36d68085c5d8c68d2fe024/Final-outputs/SIMPLIFIED_CLASSIFICATION_TCGA_2016_2021.csv",
+      "sha256": "092014678539cf3420d07072ca820c8a01299af3d77b90467bea83ee0533dd59",
+      "download_sha256": "092014678539cf3420d07072ca820c8a01299af3d77b90467bea83ee0533dd59",
+      "archive_member": null
+    }
+  ],
+  "metadata": [
+    {
+      "filename": "gdc_query_matching_participants.tsv",
+      "sha256": "513282e2974fa34f1d1f64573f7c5ba3718102bf16dffb484ea32338869b2075"
+    },
+    {
+      "filename": "gdc_query_selected_one_file_per_participant.tsv",
+      "sha256": "540ce3e1e53325bb43cb7ef193de36dda4c2f17860d07320f764959545b3e37a"
+    }
+  ],
+  "expected_preprocessed": [
+    {
+      "path": "glioma_firebrowse_who21/clinical_dataset_glioma.txt",
+      "sha256": "94fc1424b035db5d1374e1dd8959d123175b7c4d8ad6798adb878cfe9fb262cc"
+    },
+    {
+      "path": "glioma_firebrowse_who21/binary_dataset_glioma.txt",
+      "sha256": "73b38956cdd4911256586cb9c16863a73deae97717267d810d0ff09049b20b13"
+    }
+  ],
+  "expected_cohort": [
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/02_rnaseq_raw_counts_selected_genes.tsv",
+      "sha256": "a0106281315dc52f1bdeabd09e2f665101ce3c45747f5e2252f99442f7d35c6d"
+    },
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/03_rnaseq_tpm_selected_genes.tsv",
+      "sha256": "21552c98e457868d1b41f581c5038f3aecebd9db0fb91b4c52210d153de0cc8d"
+    },
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/04_rnaseq_log2_tpm_selected_genes.tsv",
+      "sha256": "62e87baf3d73e2479405b2aa1be362cf2985ce9bda7792842e061490a564b181"
+    },
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/05_rnaseq_fpkm_uq_selected_genes.tsv",
+      "sha256": "7542f2f71b95c282e72405d5bb49889eb39bb8d7aee1974d0450fec1c8cd2f01"
+    },
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/06_causal_input_mutation_plus_log2_tpm.tsv",
+      "sha256": "b5e0bc7a2efbb19ef9fb67907575ca12d29ebd8361e02d6c268c66737c6e2f4d"
+    },
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/07_participant_annotations.tsv",
+      "sha256": "063c5527799c4847dbc5c22786c576a24ebb30d859ba349daa5bcc491c18fca2"
+    },
+    {
+      "path": "tcga_rnaseq_selected_genes_streamed/08_expression_gene_qc.tsv",
+      "sha256": "05c82fd6cab2bdab026413ba3125fdaeb62bdf2c5013107c36b1727c494d7f45"
+    }
+  ],
+  "expected_subtypes": [
+    {
+      "path": "subtype_splits/expr35_all.tsv",
+      "sha256": "62e87baf3d73e2479405b2aa1be362cf2985ce9bda7792842e061490a564b181"
+    },
+    {
+      "path": "subtype_splits/expr35_astrocytoma.tsv",
+      "sha256": "d8da65da39b7d1077c2ec5e9175a6fcea0dd86e226547abd138683469f70b63a"
+    },
+    {
+      "path": "subtype_splits/expr35_glioblastoma.tsv",
+      "sha256": "95681f9a0464483c0ea4bde33f0461ff1a51b4dba4e707f2fdc1c7b60555e050"
+    },
+    {
+      "path": "subtype_splits/expr35_oligodendroglioma.tsv",
+      "sha256": "810b2e74b81fb438ae9524bce8c329705a30593b5128e17a61897480914954e8"
+    },
+    {
+      "path": "subtype_splits/mut35_all.tsv",
+      "sha256": "385f38b91db94e4133ef8bdbb7553b82f08d0dfa7f270e3180307f7a07d979c9"
+    },
+    {
+      "path": "subtype_splits/mut35_astrocytoma.tsv",
+      "sha256": "96970507f5f055b74f1bb6be9a83123c0acbe9369ad1c1577c80b3d1e6091b29"
+    },
+    {
+      "path": "subtype_splits/mut35_glioblastoma.tsv",
+      "sha256": "b86f88957198565aa791ad15669a85dba6ed9b41a10648270a8c5de0c1a60914"
+    },
+    {
+      "path": "subtype_splits/mut35_oligodendroglioma.tsv",
+      "sha256": "81cce41a959a30778cfdc6a440ed4366288093c69c939ed03bf6101f8d4c31ff"
+    },
+    {
+      "path": "subtype_splits/mut_expr70_all.tsv",
+      "sha256": "b5e0bc7a2efbb19ef9fb67907575ca12d29ebd8361e02d6c268c66737c6e2f4d"
+    },
+    {
+      "path": "subtype_splits/mut_expr70_astrocytoma.tsv",
+      "sha256": "d18fd1150532c278b20d4b07dc9bf3843bc19680ff3ba1f42f68a089ed38bc4f"
+    },
+    {
+      "path": "subtype_splits/mut_expr70_glioblastoma.tsv",
+      "sha256": "ee769e618f81e4097c90d3c1ba73c36bf251ad23753c8fc2fb4686c5177fa2c0"
+    },
+    {
+      "path": "subtype_splits/mut_expr70_oligodendroglioma.tsv",
+      "sha256": "a50c56d35bf464157cbb3a2f0f6c6e0bfab99b3df37c4a89e9f875745ad0029b"
+    },
+    {
+      "path": "subtype_splits/summary.tsv",
+      "sha256": "c418dcee8fd7de028573783d6baf5716dfbf685976f7ea83662ef785f362d033"
+    }
+  ]
+}

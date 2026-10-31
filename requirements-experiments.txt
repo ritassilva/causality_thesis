@@ -1,0 +1,9 @@
+-r requirements-analysis.txt
+-r configs/package-requirements.txt
+torch==2.5.1
+causal-learn==0.1.4.5
+gcastle==1.0.4
+dagma==1.1.1
+dodiscover @ git+https://github.com/py-why/dodiscover.git@6e64456198a5b66e515f250a8f4b143ebc31c9a6
+# AVICI is optional and uses an additional JAX environment; see README.
+optuna==4.9.0

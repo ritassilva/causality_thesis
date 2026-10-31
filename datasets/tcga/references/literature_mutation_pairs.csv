@@ -1,0 +1,19 @@
+gene_a,gene_b,relation,independent_of_tcga,sources,note
+IDH1,TP53,co-occurrence,yes,"Watanabe et al. 2009 Am J Pathol; Suzuki et al. 2015 Nat Genet; Ceccarelli et al. 2016 Cell; gbmMINER atlas 2024",astrocitoma IDH-mutado
+IDH1,ATRX,co-occurrence,yes,"Jiao et al. 2012 Oncotarget; Suzuki et al. 2015 Nat Genet; Ceccarelli et al. 2016 Cell; gbmMINER atlas 2024",astrocitoma IDH-mutado
+TP53,ATRX,co-occurrence,yes,"Jiao et al. 2012 Oncotarget; Suzuki et al. 2015 Nat Genet; Ceccarelli et al. 2016 Cell",astrocitoma IDH-mutado
+IDH1,CIC,co-occurrence,yes,"Bettegowda et al. 2011 Science; Jiao et al. 2012 Oncotarget; Suzuki et al. 2015 Nat Genet",oligodendroglioma IDH-mut 1p19q-codel
+IDH1,FUBP1,co-occurrence,yes,"Bettegowda et al. 2011 Science; Jiao et al. 2012 Oncotarget",oligodendroglioma IDH-mut 1p19q-codel
+CIC,FUBP1,co-occurrence,yes,"Bettegowda et al. 2011 Science; Suzuki et al. 2015 Nat Genet",oligodendroglioma IDH-mut 1p19q-codel
+IDH1,NOTCH1,co-occurrence,yes,"Suzuki et al. 2015 Nat Genet; TCGA 2015 NEJM",NOTCH1 no grupo oligodendroglial; confirmar no Suzuki 2015
+CIC,NOTCH1,co-occurrence,yes,"Suzuki et al. 2015 Nat Genet; TCGA 2015 NEJM",NOTCH1 no grupo oligodendroglial; confirmar no Suzuki 2015
+IDH1,IDH2,exclusivity,yes,"Yan et al. 2009 NEJM; Suzuki et al. 2015 Nat Genet",mutacoes alternativas no mesmo mecanismo
+ATRX,CIC,exclusivity,yes,"Jiao et al. 2012 Oncotarget; Suzuki et al. 2015 Nat Genet",astrocitoma vs oligodendroglioma
+ATRX,FUBP1,exclusivity,yes,"Jiao et al. 2012 Oncotarget",astrocitoma vs oligodendroglioma
+TP53,CIC,exclusivity,yes,"Suzuki et al. 2015 Nat Genet; Ceccarelli et al. 2016 Cell",astrocitoma vs oligodendroglioma
+TP53,FUBP1,exclusivity,yes,"Suzuki et al. 2015 Nat Genet; Ceccarelli et al. 2016 Cell",astrocitoma vs oligodendroglioma
+IDH1,EGFR,exclusivity,no,"Brennan et al. 2013 Cell; Ceccarelli et al. 2016 Cell",EGFR no glioblastoma IDH-wildtype
+IDH1,PTEN,exclusivity,no,"Brennan et al. 2013 Cell; Ceccarelli et al. 2016 Cell",PTEN no glioblastoma IDH-wildtype
+IDH1,NF1,exclusivity,no,"Brennan et al. 2013 Cell; Ceccarelli et al. 2016 Cell",NF1 no glioblastoma IDH-wildtype
+PIK3CA,PIK3R1,exclusivity,no,"Brennan et al. 2013 Cell; Sanchez-Vega et al. 2018 Cell",mesma via PI3K
+EGFR,NF1,exclusivity,no,"Verhaak et al. 2010 Cancer Cell; Brennan et al. 2013 Cell",subtipo classico vs mesenquimal

@@ -1,0 +1,8 @@
+*.py text eol=lf
+*.R text eol=lf
+*.csv text eol=lf
+*.json text eol=lf
+
+datasets/**/*.npz filter=lfs diff=lfs merge=lfs -text
+
+results/**/*.npz filter=lfs diff=lfs merge=lfs -text

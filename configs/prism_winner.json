@@ -1,0 +1,15 @@
+{
+  "params": {
+    "alpha": 0.501815289490836,
+    "direction": "binary",
+    "gate": "none",
+    "lambda_d": 2.3175277085961845,
+    "lambda_e": 0.25319395844003595,
+    "lambda_s": 0.0002756374551908298,
+    "q_G": 0.7138502771541309,
+    "q_H": 0.42077299145379465
+  },
+  "threshold": 0.1,
+  "model": "PRISM",
+  "selection": "Final validation winner used for the stored evaluations."
+}

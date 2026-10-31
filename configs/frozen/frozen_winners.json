@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "selection": {
+    "search_dataset_seeds": [
+      13,
+      21,
+      29,
+      32,
+      44
+    ],
+    "validation_dataset_seeds": [
+      64,
+      85,
+      90,
+      107,
+      249
+    ],
+    "source": "tuning_study/results_joint/winner__<model>__joint.json",
+    "note": "Exact joint winners frozen before evaluation on the aligned test datasets. No search or validation is repeated."
+  },
+  "winners": {
+    "AVICI": {
+      "params": {},
+      "threshold": 0.7,
+      "source_sha256": "b422ae151912029ff57782b6db97b3688a7bbe661803706f1550d45e6d6c52c5"
+    },
+    "DAGMA_Linear": {
+      "params": {
+        "lambda1": 0.10055892387592255,
+        "T": 6,
+        "lr": 7.120531190456953e-05,
+        "mu_factor": 0.1808618643570415
+      },
+      "threshold": 0.1,
+      "source_sha256": "9dc143f68de07f37a568022f9c379d40e98a8387ad12c8a5d512cfce31017280"
+    },
+    "DAGMA_Nonlinear": {
+      "params": {
+        "lambda1": 0.0030519698347310437,
+        "lambda2": 0.0005442554166274262,
+        "hidden_dim": 8,
+        "lr": 0.0010429441606122837,
+        "T": 6,
+        "iter_scale": 0.0625
+      },
+      "threshold": 0.8,
+      "source_sha256": "76d9735031c7b53f4aa06e8979e5dbc856ea784b068adde45877b504acba0ea5"
+    },
+    "DAS": {
+      "params": {
+        "alpha": 0.005233625874486607,
+        "das_cutoff": 0.018327261350767454,
+        "eta_G": 0.0005385069498382033,
+        "eta_H": 0.009410999009436847,
+        "max_parents": 40
+      },
+      "threshold": null,
+      "source_sha256": "66ac680a6c6b4d002a6a60adad72dc688fd18334f43dac2e00cf47e6594e92a9"
+    },
+    "DirectLiNGAM": {
+      "params": {
+        "measure": "pwling"
+      },
+      "threshold": 0.15,
+      "source_sha256": "86f2af64b90c0e87c3d65380b5434ad8e31a996f673136a7b544866b86f68d94"
+    },
+    "FCI": {
+      "params": {
+        "alpha": 0.22583751255202858,
+        "independence_test_method": "rcit",
+        "depth": 4,
+        "max_path_length": 3
+      },
+      "threshold": null,
+      "source_sha256": "721070e096e4905587627d18714962abd3cdca49347c237c495e1cfd15b64448"
+    },
+    "GES": {
+      "params": {
+        "lambda_value": 2.382429027868342,
+        "maxP": null,
+        "score_func": "local_score_BIC"
+      },
+      "threshold": null,
+      "source_sha256": "8667d145672359efa9ac44315b5b542d9c454a25c4912c74691a986e9a2c5ca0"
+    },
+    "GOLEM": {
+      "params": {
+        "lambda_1": 0.0387075322138643,
+        "lambda_2": 0.520085975890123,
+        "learning_rate": 0.006289066934683722,
+        "num_iter": 50000,
+        "equal_variances": false
+      },
+      "threshold": 0.15,
+      "source_sha256": "0103fb1529769c617a6ab91e331cb6a4cd94fa01ed6572ef21df6ef8247e768c"
+    },
+    "GRaSP": {
+      "params": {
+        "depth": 3,
+        "lambda_value": 2.0,
+        "score_func": "local_score_BIC_from_cov"
+      },
+      "threshold": null,
+      "source_sha256": "5f2e2ac94a97e2a618a5c6d0d9be11bb8d7791a2ba72e9020354a869aa523b3c"
+    },
+    "GraNDAG": {
+      "params": {
+        "hidden_dim": 10,
+        "hidden_num": 1,
+        "lr": 0.000589877520836733,
+        "model_name": "NonLinGaussANM",
+        "use_pns": true
+      },
+      "threshold": null,
+      "source_sha256": "9d78903e932774dddc352cebbee5c24b51707970ffa6a6a28671e01cfc8f6534"
+    },
+    "NOTEARS": {
+      "params": {
+        "lambda1": 0.17570910990101513,
+        "max_iter": 200
+      },
+      "threshold": 0.03,
+      "source_sha256": "f561ffca734cacf9d0a487b77b62b3be77eb2a68dd0403c74b8668997336e534"
+    },
+    "NoGAM": {
+      "params": {
+        "alpha": 0.007528294498616601,
+        "eta_G": 0.00010082796261595154,
+        "eta_H": 0.00991476334203327,
+        "ridge_alpha": 0.09934219095258136,
+        "n_splines": 20
+      },
+      "threshold": null,
+      "source_sha256": "c7cd39260c7e2fbe9a0bf69410193078ec92dfed2739a1e794f021229d86fc4b"
+    },
+    "PC": {
+      "params": {
+        "alpha": 0.11967636751155224,
+        "indep_test": "rcit",
+        "uc_rule": 2
+      },
+      "threshold": null,
+      "source_sha256": "1fc725a26c86897ae3405517b4580e9a56fc5701c74bf182e142985266414fc4"
+    },
+    "SCORE": {
+      "params": {
+        "alpha": 0.005404078210638001,
+        "eta_G": 0.0019419918057858236,
+        "eta_H": 0.00516973630818818,
+        "n_splines": 20
+      },
+      "threshold": null,
+      "source_sha256": "49def8dbef61364fd517061a3c9fc3c12023a73cb19f799f6046a8783a58726a"
+    }
+  }
+}
