@@ -27,10 +27,12 @@ def holm(pvalues):
 
 
 def paired_scope(frame, experiment, scope, metric, higher=True):
-    """Average model runs within dataset blocks, excluding incomplete models.
+    """Compare methods using shared dataset-instance blocks.
 
-    Each Holm family is exactly one experiment/scope/metric. Identical paired
-    values yield p=1. Missing runs are omitted.
+    Model-seed measurements are averaged within each dataset instance. Models
+    with unfinished fits or missing metric blocks are excluded from the scope;
+    retained methods share the same complete blocks. Holm adjustment is applied
+    separately for each experiment/scope/metric. Identical paired values give p=1.
     """
     eligible = frame.groupby("model").finished.all()
     coverage = frame.groupby("model").agg(

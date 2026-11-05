@@ -1,4 +1,4 @@
-"""Create the publication convergence figure for PRISM from saved traces."""
+"""Draw PRISM convergence from saved traces or prepared numerical summaries."""
 
 from __future__ import annotations
 
@@ -15,8 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from final_visualization import DEFAULT_FONT_SIZE, OKABE_ITO, apply_style
 
-ALIGNED_FITS = ROOT / "results/prism/convergence/fits"
-FIGURES = ROOT / "results/prism/convergence/figures"
+CONVERGENCE_FITS = ROOT / "results/prism/convergence/fits"
 FAMILY_LABELS = {
     "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed": "ER, non Gaussian mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed": "MultiOmics",
@@ -29,11 +28,11 @@ FAMILY_COLORS = {
 }
 
 
-def load_aligned_convergence() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load the 225 saved PRISM traces from the aligned test evaluation."""
+def load_convergence() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load the 225 saved PRISM traces from the final test evaluation."""
     fit_rows: list[dict[str, object]] = []
     trace_rows: list[dict[str, object]] = []
-    for path in sorted(ALIGNED_FITS.rglob("*.json")):
+    for path in sorted(CONVERGENCE_FITS.rglob("*.json")):
         payload = json.loads(path.read_text())
         family = payload.get("family")
         if family not in FAMILY_LABELS:
@@ -88,11 +87,11 @@ def load_aligned_convergence() -> tuple[pd.DataFrame, pd.DataFrame]:
     traces = pd.DataFrame(trace_rows)
     expected = len(FAMILY_LABELS) * 15 * 5
     if len(fits) != expected:
-        raise ValueError(f"Expected {expected} aligned test fits, found {len(fits)}")
+        raise ValueError(f"Expected {expected} final test fits, found {len(fits)}")
     if fits.duplicated(["family", "dataset_seed", "model_seed"]).any():
-        raise ValueError("Duplicate aligned convergence fits")
+        raise ValueError("Duplicate final convergence fits")
     if not fits["status"].eq("finished").all():
-        raise ValueError("The aligned convergence collection contains unfinished fits")
+        raise ValueError("The final convergence collection contains unfinished fits")
     return (fits, traces)
 
 
@@ -146,18 +145,23 @@ def convergence_statistics(fits: pd.DataFrame, traces: pd.DataFrame) -> dict[str
 def plot_prism_convergence(
     traces: pd.DataFrame | None = None,
     fits: pd.DataFrame | None = None,
-    *,
-    save: bool = True,
+    prepared_data: dict | None = None,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, float]]:
-    """Plot objective, acyclicity and final numerical change for aligned test fits."""
-    if traces is None or fits is None:
-        aligned_fits, aligned_traces = load_aligned_convergence()
-        fits = aligned_fits if fits is None else fits
-        traces = aligned_traces if traces is None else traces
+    """Plot objective, acyclicity and final numerical change for final test fits."""
+    if prepared_data is not None:
+        fits = prepared_data['fits']
+        prepared = prepared_data['traces']
+        objective = prepared_data['objective']
+        acyclicity = prepared_data['acyclicity']
+    else:
+        if traces is None or fits is None:
+            saved_fits, saved_traces = load_convergence()
+            fits = saved_fits if fits is None else fits
+            traces = saved_traces if traces is None else traces
+        prepared = _prepare_traces(traces)
+        objective = _trajectory_summary(prepared, "relative_objective")
+        acyclicity = _trajectory_summary(prepared, "h")
     apply_style()
-    prepared = _prepare_traces(traces)
-    objective = _trajectory_summary(prepared, "relative_objective")
-    acyclicity = _trajectory_summary(prepared, "h")
     fig, axes = plt.subplots(
         1,
         3,
@@ -274,15 +278,7 @@ def plot_prism_convergence(
         handlelength=2.8,
         columnspacing=2.0,
     )
-    stats = convergence_statistics(fits, prepared)
-    if save:
-        FIGURES.mkdir(parents=True, exist_ok=True)
-        for suffix in ["png", "pdf"]:
-            fig.savefig(
-                FIGURES / f"prism_convergence.{suffix}",
-                dpi=400,
-                bbox_inches="tight",
-            )
+    stats = prepared_data["stats"] if prepared_data is not None else convergence_statistics(fits, prepared)
     return (fig, axes, stats)
 
 

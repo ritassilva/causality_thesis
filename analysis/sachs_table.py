@@ -1,15 +1,14 @@
-"""Sachs (cd3cd28, 853 rows, 17-arc gold standard): one row per model, untuned and tuned.
+"""Summarize Sachs model performance by method and tuned/untuned configuration.
 
-Inputs are the individual measurements in results/sachs/sachs_cd3cd28.csv. Each
-arm is 15 model seeds on the same data, so the ± is the standard deviation across
-model seeds, not data uncertainty.
-
-F0.5 is computed from the stored precision and recall.
-
-    python analysis/sachs_table.py
+Inputs are the measurements in results/sachs/sachs_cd3cd28.csv. Summaries use
+the model-seed results recorded for the same observational sample; their
+variation is not uncertainty across independent datasets. F0.5 is calculated
+from precision and recall during numerical preparation.
 """
 
 from __future__ import annotations
+
+from pathlib import Path
 
 import pandas as pd
 
@@ -23,8 +22,8 @@ METRICS = {
 
 
 def load():
-    from condition_data import load_results
-    frame = load_results("sachs")
+
+    frame = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((Path(__file__).resolve().parents[1] / "results/sachs").glob("*.csv"))], ignore_index=True)
     frame["base"] = frame["model"]
     return frame
 

@@ -20,8 +20,7 @@ dist/
 .ipynb_checkpoints/
 .cache/
 .ruff_cache/
-.pytest_cache/
 
-# New experiment runs are kept separate from the published results
+# Additional runs are kept separate from the submitted measurements
 results/new_runs/
 *.log

@@ -1,57 +1,9 @@
-"""Que relações causais conhecidas encontrou um modelo, e quais encontrou ao contrário.
+"""Evaluate inferred TCGA relationships against the strict reference table.
 
-Para um grafo (o consenso de um braço do estudo TCGA, ou um CSV de arestas
-qualquer), percorre as relações de ``references/strict_relations.csv`` e diz,
-uma a uma, o que o modelo fez com cada uma. Só entram relações com direcção e
-bem suportadas:
-
-| grupo | o quê | variáveis |
-|---|---|---|
-| ``signor`` | todas as setas do SIGNOR entre os 35 genes, incluindo as tracejadas (indirectas) | expressão -> expressão |
-| ``cis`` | NF1, ATRX e RB1: a mutação baixa a expressão do próprio gene | mutação -> expressão |
-
-As setas que o SIGNOR dá nos dois sentidos (PIK3R1 <-> PIK3CA, NOTCH1 <->
-ZMIZ1) estão como duas linhas, A -> B e B -> A. Cada seta é avaliada à parte,
-e encontrar uma delas no sentido B -> A não é um erro, porque B -> A também
-está na referência.
-
-**Directas e indirectas.** Uma seta A -> B conta como encontrada se o modelo
-tiver a aresta A - B (directa) *ou* um caminho dirigido A => B com no máximo
-``--max-path`` arestas (indirecta). As setas tracejadas do SIGNOR passam por
-moléculas que não estão no painel (o PIP3, no caso PTEN -| PIK3CA), por isso
-o modelo pode representá-las de qualquer das duas formas.
-
-Estados de cada seta:
-
-* ``direta_sentido_certo`` / ``indireta_sentido_certo``;
-* ``direta_sentido_trocado`` / ``indireta_sentido_trocado`` -- **errada**;
-* ``direta_outro_sentido_na_referencia`` -- o modelo tem B -> A e B -> A
-  também é uma seta da referência: não é erro;
-* ``direta_sem_orientacao`` -- a aresta existe mas o modelo não a orientou;
-* ``nao_encontrada``.
-
-**Errado** quer dizer só duas coisas: uma seta encontrada ao contrário (e o
-contrário não está na referência), e arestas expressão -> mutação, que são
-biologicamente impossíveis (aparecem na vista ``raw`` dos braços que não
-impõem a restrição). Uma aresta do modelo que não está na referência não é
-contada como erro: a referência é incompleta.
-
-**Acaso.** Num grafo denso quase tudo está ligado por algum caminho, por isso
-cada seta traz a probabilidade de um par ao acaso do mesmo tipo estar ligado
-directamente (``chance_direta``) ou por caminho dirigido (``chance_caminho``).
-
-Exemplos (a partir da raiz do repositório, com o ambiente de análise ativo)::
-
-    # o modelo final, nos três datasets
-    python analysis/tcga/score_model.py --arm PRISM__tuned
-
-    # todos os braços, só as tabelas
-    python analysis/tcga/score_model.py --arm all
-
-    # um grafo qualquer: CSV com colunas source,target[,orientation]
-    python analysis/tcga/score_model.py --edges grafo.csv --dataset tcga_mut_expr70
-
-Escreve em ``results/tcga/literature_comparison/model_scores/``.
+References are read from datasets/tcga/references/strict_relations.csv. Scores
+distinguish direct, indirect, reversed and unrecovered relationships at the
+measurement level represented by each dataset. These selected references do
+not constitute a complete causal ground truth.
 """
 
 from __future__ import annotations

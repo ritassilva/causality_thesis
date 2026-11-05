@@ -1,7 +1,4 @@
 {
-  "excluded_families": [
-    "ModSubtype"
-  ],
   "model_seeds": {
     "benchmark": [
       0,

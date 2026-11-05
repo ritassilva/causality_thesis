@@ -3,21 +3,21 @@
   "sources": [
     {
       "filename": "GBMLGG-TP.final_analysis_set.maf.txt",
-      "url": "https://gdac.broadinstitute.org/runs/analyses__2016_01_28/reports/cancer/GBMLGG-TP/MutSigNozzleReport2CV/GBMLGG-TP.final_analysis_set.maf",
+      "url": "https://gdac.broadinstitute.org/experiments/analyses__2016_01_28/reports/cancer/GBMLGG-TP/MutSigNozzleReport2CV/GBMLGG-TP.final_analysis_set.maf",
       "sha256": "d61487314c8105216d083602da1109ef783805fd982d1d98f3a28ff8162c1051",
       "download_sha256": "d61487314c8105216d083602da1109ef783805fd982d1d98f3a28ff8162c1051",
       "archive_member": null
     },
     {
       "filename": "GBMLGG.clin.merged.picked.txt",
-      "url": "https://gdac.broadinstitute.org/runs/stddata__2016_01_28/data/GBMLGG/20160128/gdac.broadinstitute.org_GBMLGG.Clinical_Pick_Tier1.Level_4.2016012800.0.0.tar.gz",
+      "url": "https://gdac.broadinstitute.org/experiments/stddata__2016_01_28/data/GBMLGG/20160128/gdac.broadinstitute.org_GBMLGG.Clinical_Pick_Tier1.Level_4.2016012800.0.0.tar.gz",
       "sha256": "66d1cb7577a4a1e7516d7aef4833a52e234ed2e3756f1b4c794ad986971f2411",
       "download_sha256": "8992b4bd1e8dcd02e2d35bccfba34d58844796332bca430e50b51746abdef34d",
       "archive_member": "gdac.broadinstitute.org_GBMLGG.Clinical_Pick_Tier1.Level_4.2016012800.0.0/GBMLGG.clin.merged.picked.txt"
     },
     {
       "filename": "sig_genes.txt",
-      "url": "https://gdac.broadinstitute.org/runs/analyses__2016_01_28/reports/cancer/GBMLGG-TP/MutSigNozzleReport2CV/sig_genes.txt",
+      "url": "https://gdac.broadinstitute.org/experiments/analyses__2016_01_28/reports/cancer/GBMLGG-TP/MutSigNozzleReport2CV/sig_genes.txt",
       "sha256": "e708be5b50604a01e8f653ff4d6b95c8f948bd5e1c1517e7a8aa4bec31862195",
       "download_sha256": "e708be5b50604a01e8f653ff4d6b95c8f948bd5e1c1517e7a8aa4bec31862195",
       "archive_member": null

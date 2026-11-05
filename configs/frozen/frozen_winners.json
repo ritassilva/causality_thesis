@@ -15,8 +15,8 @@
       107,
       249
     ],
-    "source": "tuning_study/results_joint/winner__<model>__joint.json",
-    "note": "Exact joint winners frozen before evaluation on the aligned test datasets. No search or validation is repeated."
+    "note": "Selected hyperparameters used for the reported baseline evaluation.",
+    "protocol": "configs/baseline_study.json"
   },
   "winners": {
     "AVICI": {

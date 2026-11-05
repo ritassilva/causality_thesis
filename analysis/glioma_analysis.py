@@ -1,8 +1,9 @@
-"""Utilities for the TCGA glioma analysis notebook.
+"""Numerical summaries and plotting functions for the final TCGA glioma results.
 
-The module deliberately loads results into memory and does not write derived
-tables.  It combines the three complete-cohort datasets in ``arms_analysis``
-with the nine cancer-type datasets in ``arms_analysis_subtypes``.
+The analysis covers mutation-only, expression-only and joint measurements for
+the full cohort and the three recorded subtypes. Functions summarize model-seed
+support, method agreement, threshold sensitivity and reference relationships.
+Numerical outputs used by the notebooks are prepared by runs/calculate_results.py.
 """
 
 from __future__ import annotations
@@ -94,14 +95,14 @@ def _analysis_dir(tcga_root: Path, dataset: str) -> Path:
 
 
 def _load_labels() -> dict[str, list[str]]:
-    from condition_data import load_sample
+
 
     labels = {}
     for base in BASE_DATASETS:
         ordered = []
         for subtype in SUBTYPES:
             dataset = f"{base}__{subtype}"
-            with load_sample("tcga", dataset) as observations:
+            with np.load(find_project_root() / "datasets/tcga" / f"{dataset}.npz", allow_pickle=False) as observations:
                 labels[dataset] = list(map(str, observations["col_names"]))
             for label in labels[dataset]:
                 if label not in ordered:
@@ -127,9 +128,9 @@ class GliomaBundle:
 
 def edge_occurrences(analysis: Path) -> pd.DataFrame:
     """Aggregate individual saved graph edges using the measured fit counts."""
-    from condition_data import load_results
 
-    metrics = load_results("tcga")
+
+    metrics = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((find_project_root() / "results/tcga").glob("*.csv"))], ignore_index=True)
     metrics["arm"] = metrics.model + "__" + metrics.arm
     knowledge = metrics.condition_id.astype(str).str.endswith("__background_knowledge")
     metrics.loc[knowledge, "arm"] += "__bk"
@@ -181,8 +182,8 @@ def load_glioma_results(
     ):
         analysis = tcga_root / analysis_name
         rates = edge_occurrences(analysis)
-        from condition_data import load_results
-        metrics = load_results("tcga")
+
+        metrics = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((find_project_root() / "results/tcga").glob("*.csv"))], ignore_index=True)
         names = metrics["model"]
         metrics["arm"] = names + "__" + metrics["arm"]
         knowledge = metrics["condition_id"].astype(str).str.endswith("__background_knowledge")
@@ -2211,16 +2212,16 @@ def build_model_graphs(
 ) -> dict[str, dict[str, pd.DataFrame]]:
     """Consensus graphs for every requested individual model and dataset.
 
-    ``edge_mode='directed'`` applies the same exact-arrow rule to all twelve
-    datasets, including mutation-only data. ``legacy`` preserves the older
-    mutation-skeleton convention used by the exploratory notebook.
+    ``edge_mode='directed'`` requires directed-edge support in all datasets.
+    ``edge_mode='mutation_skeleton'`` instead aggregates unordered pairs for
+    mutation-only datasets while retaining directed edges for other data.
     """
-    if edge_mode not in {"directed", "legacy"}:
-        raise ValueError("edge_mode must be 'directed' or 'legacy'")
+    if edge_mode not in {"directed", "mutation_skeleton"}:
+        raise ValueError("edge_mode must be 'directed' or 'mutation_skeleton'")
     selected = resolve_models(models if models is not None else bundle.models)
 
     def graph_for(dataset: str, model: str) -> pd.DataFrame:
-        if edge_mode == "legacy":
+        if edge_mode == "mutation_skeleton":
             return _consensus_frame(bundle, dataset, model, min_rate)
         frame = bundle.result(dataset, model)
         out = frame[frame["directed_rate"] >= min_rate].copy()

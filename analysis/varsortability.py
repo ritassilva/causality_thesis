@@ -1,10 +1,9 @@
-"""Compute var- and R²-sortability from observational data and a known DAG.
+"""Calculate varsortability, R²-sortability and the R²-SortnRegress baseline.
 
-Varsortability is the fraction of directed causal paths whose source has a
-smaller marginal variance than their destination.  The calculation in this
-module intentionally computes varsortability from the raw observational CSV,
-before z-score normalisation.  Each source/target pair is counted once per path
-length, following the reference matrix-power definition; ties contribute half.
+Inputs are observational arrays and their reference graphs. Varsortability is
+measured before standardization. Directed paths are counted by path length;
+variance or R² ties contribute half a correctly ordered path. These calculations
+run during numerical preparation, not during notebook presentation.
 """
 
 from __future__ import annotations
@@ -184,14 +183,16 @@ def calculate_varsortability_table(
     rows: list[dict[str, object]] = []
     for identity in identities.itertuples(index=False):
         if dataset_roots is None:
-            from condition_data import load_sample, sample_path
-            sample = load_sample("benchmark", str(identity.dataset), identity.dataset_seed)
+
+            data_path = root / "datasets/synthetic" / f"{identity.dataset}__seed_{int(identity.dataset_seed)}.npz"
+            with np.load(data_path, allow_pickle=False) as archive:
+                sample = {key: archive[key] for key in archive.files}
             if "X_raw" not in sample:
                 raise ValueError("Raw observations are unavailable for this condition; raw varsortability cannot use standardized observations.")
-            labels = sample["col_names"].astype(str)
+            labels = np.asarray(sample.get("col_names", [f"X{i}" for i in range(sample["X"].shape[1])])).astype(str)
             observations = pd.DataFrame(sample["X_raw"], columns=labels)
             adjacency = pd.DataFrame(sample["true_adj"], index=labels, columns=labels)
-            data_path = adjacency_path = sample_path("benchmark", str(identity.dataset))
+            data_path = adjacency_path = data_path
         else:
             directory = _dataset_directory(
                 root, identity.dataset_seed, str(identity.dataset), dataset_roots
@@ -252,14 +253,16 @@ def calculate_r2_sort_regress_table(
     rows: list[dict[str, object]] = []
     for identity in identities.itertuples(index=False):
         if dataset_roots is None:
-            from condition_data import load_sample, sample_path
-            sample = load_sample("benchmark", str(identity.dataset), identity.dataset_seed)
+
+            data_path = root / "datasets/synthetic" / f"{identity.dataset}__seed_{int(identity.dataset_seed)}.npz"
+            with np.load(data_path, allow_pickle=False) as archive:
+                sample = {key: archive[key] for key in archive.files}
             if "X_raw" not in sample:
                 raise ValueError("Raw observations are unavailable for this condition; raw varsortability cannot use standardized observations.")
-            labels = sample["col_names"].astype(str)
+            labels = np.asarray(sample.get("col_names", [f"X{i}" for i in range(sample["X"].shape[1])])).astype(str)
             observations = pd.DataFrame(sample["X_raw"], columns=labels)
             adjacency = pd.DataFrame(sample["true_adj"], index=labels, columns=labels)
-            data_path = adjacency_path = sample_path("benchmark", str(identity.dataset))
+            data_path = adjacency_path = data_path
         else:
     
             directory = _dataset_directory(

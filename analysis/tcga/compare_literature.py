@@ -1,60 +1,11 @@
-"""Concordância dos grafos do TCGA com o que se sabe do glioma.
+"""Compare TCGA graph relationships with selected biological reference sources.
 
-Não há verdade para um glioma, por isso nada aqui é uma validação: a pergunta
-é se cada braço recupera relações já descritas *mais do que o acaso* e *mais
-do que um método trivial com o mesmo número de arestas*. Três referências,
-cada uma lida no bloco de variáveis onde faz sentido:
-
-| referência | bloco | dataset(s) |
-|---|---|---|
-| ``cis`` -- X_mut -> X_expr do mesmo gene | mutação-expressão | ``tcga_mut_expr70`` |
-| ``literature_all`` / ``literature_independent`` -- pares de co-ocorrência e exclusividade publicados | mutação-mutação | ``tcga_mut35``, ``tcga_mut_expr70`` |
-| ``string_expdb`` / ``string_combined`` -- STRING, só canais experiments+databases / score combinado | expressão-expressão | ``tcga_expr35``, ``tcga_mut_expr70`` |
-| ``omnipath_directed`` / ``signor`` / ``collectri`` -- interacções causais curadas, com direcção | expressão-expressão | ``tcga_expr35``, ``tcga_mut_expr70`` |
-
-A contagem de hits é sempre no **esqueleto**: nos blocos de mutação a
-direcção não é identificável, e o sinal de uma aresta (co-ocorrência vs
-exclusividade) não está guardado nos grafos, por isso um par conta como
-recuperado se as duas variáveis estiverem ligadas, em qualquer sentido.
-
-As três referências do OmniPath têm direcção, e só essas são lidas também na
-direcção: dos pares recuperados com uma direcção única na referência, quantos
-o braço orientou igual (``n_same``), ao contrário (``n_reversed``) ou deixou
-por orientar (``n_unoriented``), com um teste binomial contra 50%
-(``p_direction``). Um par que a referência dá nos dois sentidos (PIK3CA <->
-PIK3R1, por exemplo) conta para o esqueleto mas não para a direcção.
-
-``signor`` vem de ``references/signor_site.csv``, as interacções entre os 35
-genes copiadas à mão do site do SIGNOR (a cópia do SIGNOR dentro do OmniPath
-tinha só 4 dos 7 pares); ``collectri`` é o subconjunto factor de transcrição -> alvo, a
-única das três que fala de regulação da *expressão*. As outras são
-sinalização ao nível da proteína (fosforilação, ligação), que é causal mas
-não é a mesma coisa que o mRNA de A mudar o mRNA de B.
-
-Para cada (dataset, braço, referência), ``k`` é o número de arestas do braço
-no bloco e ``hits`` quantas estão na referência. Ao lado:
-
-* ``p_hypergeom`` -- nulo uniforme: k pares tirados ao acaso do bloco.
-* ``p_degree_preserving`` -- nulo que mantém o grau de cada nó (trocas de
-  arestas). É o que importa: genes muito estudados (TP53, IDH1, EGFR) têm
-  muitas relações conhecidas, e um braço que os transforma em hubs acertaria
-  por acaso no nulo uniforme.
-* ``baseline_marginal_hits`` -- os k pares mais significativos de um teste
-  par-a-par nos mesmos dados (Fisher em mut-mut, Mann-Whitney em mut-expr,
-  Spearman em expr-expr).
-* ``baseline_partial_hits`` -- os k pares com maior |correlação parcial|
-  (inversa da matriz de correlação do dataset inteiro).
-
-Os baselines usam os mesmos 665 participantes, por isso a circularidade de
-uma referência tirada do TCGA afecta-os tanto como ao braço; um braço só
-mostra valor próprio se bater o baseline com o mesmo k.
-
-Correr no Mac, com o venv de análise (precisa de numpy/pandas/scipy e, na
-primeira vez, de internet para o STRING e o OmniPath)::
-
-    python analysis/tcga/compare_literature.py --fetch
-
-Escreve em ``results/tcga/literature_comparison/``.
+The comparisons distinguish mutation, expression and cross-modality variable
+pairs. Statistical enrichment can be evaluated against uniform and degree-
+preserving nulls and against marginal-association and partial-correlation
+baselines. Curated reference files are under datasets/tcga/references/.
+Optional STRING and OmniPath queries are used only by the explicit data-fetch
+command; opening the presentation notebooks does not access these services.
 """
 
 from __future__ import annotations

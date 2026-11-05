@@ -1,42 +1,10 @@
-"""As arestas mutação-mutação explicam-se pela carga mutacional?
+"""Assess whether mutation co-occurrence is associated with panel mutation burden.
 
-Um tumor hipermutado tem mutações em quase todos os genes longos ao mesmo
-tempo, por isso dois genes passageiros aparecem juntos sem terem nada que ver
-um com o outro. Sem a TMB real (o ficheiro só tem os 35 genes), a carga de
-cada doente é aproximada pelo número de genes do painel que tem mutados.
-Nada aqui refaz datasets nem refita modelos: lê o TSV e os consensos que já
-existem.
-
-Três passos:
-
-1. **Carga por doente** -- ``n_mut`` = genes mutados entre os 35. Um doente
-   é de carga alta se ``n_mut`` passar o limiar: por omissão o "far out" de
-   Tukey, Q3 + 3*IQR, com mínimo de 4; ``--high-burden`` fixa-o à mão.
-
-2. **Cada par de genes (595)** --
-   * ``n_comut``: doentes com os dois mutados, e quantos são de carga alta
-     (``share_high_burden``);
-   * Fisher em todos os doentes e Fisher só nos de carga normal;
-   * um nulo que mantém **ao mesmo tempo** quantas mutações tem cada doente
-     e quantos doentes tem cada gene (trocas *curveball* na matriz 665x35).
-     É a ideia do DISCOVER (Canisius et al. 2016): a co-ocorrência que
-     sobra depois de fixar a carga de cada doente. ``p_cooc_burden`` e
-     ``p_excl_burden`` dizem se o par aparece junto mais / menos do que a
-     carga sozinha prevê.
-
-   Um par é ``explained_by_burden`` se o Fisher simples o dá como
-   associado (p < alpha) mas o nulo com carga fixa não (os dois p >= alpha):
-   a associação existe, mas a carga chega para a produzir.
-
-3. **As arestas de cada braço** -- as arestas mutação-mutação do consenso
-   (``tcga_mut35`` e bloco mut-mut do ``tcga_mut_expr70``) com o
-   diagnóstico do par ao lado, e um resumo por braço.
-
-Correr no Mac::
-
-    python analysis/tcga/hypermutation_diagnostic.py
-
-Escreve em ``results/tcga/literature_comparison/hypermutation/``.
+Burden is the number of mutated genes in the recorded panel, not a genome-wide
+mutation-burden estimate. Pairwise Fisher comparisons are complemented by a
+curveball null that preserves row and column sums of the binary mutation
+matrix. The diagnostic reads the prepared cohort and saved consensus edges;
+it does not regenerate datasets or refit causal models.
 """
 
 from __future__ import annotations

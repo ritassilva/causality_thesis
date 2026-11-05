@@ -83,9 +83,6 @@ def parse_dataset_attributes(dataset_name: str) -> dict[str, Any]:
 
     Expected format:
         {n_nodes}nodes_{graph_type}_obsconf{obs}_latconf{lat}_{noise}_{mechanism}
-
-    Example:
-        10nodes_DenseER_obsconf0_latconf0_Gaussian_Linear
     """
     parts = str(dataset_name).split("_")
     if len(parts) < 6:

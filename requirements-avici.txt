@@ -1,5 +1,5 @@
 # Optional AVICI environment; Python 3.11. Includes the experiment runners.
--r requirements-experiments.txt
+-r requirements-runs.txt
 avici==1.0.7
 dm-haiku==0.0.13
 jax==0.4.35

@@ -1,33 +1,9 @@
-"""Relações causais conhecidas, separadas pelo nível em que o modelo as pode ver.
+"""Evaluate TCGA reference relationships at their recorded measurement level.
 
-Versão do ``score_model.py`` que lê
-``references/phased_relations_glioma_rna_final.csv`` e
-reporta duas fases em separado:
-
-| fase | nível | grupos | o quê |
-|---|---|---|---|
-| 1 | mRNA | ``mut_expr`` | IDH1_mut -> PDGFRA_expr (Flavahan et al. 2016) |
-| 1 | mRNA | ``cis`` | ATRX, NF1, RB1: a mutação baixa a expressão do próprio gene |
-| 1 | mRNA | ``transcricao`` | TP53 -> EGFR, TP53 -> PTEN, NOTCH1 -> EGFR, NOTCH1 -> TCF12 |
-| 2 | proteína | ``proteina`` | as outras 7 setas do SIGNOR |
-
-A fase 1 é a avaliação: relações cujo efeito cai no mRNA, que é o que os
-dados medem, e que um bom modelo devia poder encontrar. A fase 2 é
-exploratória: as setas actuam na actividade ou na estabilidade da proteína,
-não se espera que deixem marca no mRNA, e falhá-las não é um erro do modelo.
-
-A forma de avaliar cada seta é a do ``score_model.py`` (directa ou por
-caminho dirigido de até ``--max-path`` arestas; setas nos dois sentidos
-avaliadas cada uma; errado = sentido contrário, ou aresta expressão ->
-mutação), e as funções vêm de lá.
-
-Exemplos (a partir da raiz do repositório, com o ambiente de análise ativo)::
-
-    python analysis/tcga/score_model_phased.py --arm PRISM__tuned
-    python analysis/tcga/score_model_phased.py --arm all
-    python analysis/tcga/score_model_phased.py --edges grafo.csv --dataset tcga_mut_expr70
-
-Escreve em ``results/tcga/literature_comparison/model_scores_phased/``.
+The reference table is datasets/tcga/references/phased_relations_glioma_rna_final.csv.
+Phase 1 contains mRNA-level relationships; phase 2 contains protein-level
+relationships considered separately. Inferred graph relationships are classified
+by directness, direction and recovery.
 """
 
 from __future__ import annotations

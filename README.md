@@ -1,40 +1,31 @@
-# Benchmark and PRISM experiments
+# Causal discovery results
 
-Datasets, experiment scripts and executed notebooks for PRISM and baseline causal
-discovery methods. PRISM is imported from the
-[`prism` package](https://github.com/ritassilva/PRISM) developed on this thesis.
+Final datasets, model measurements and notebook analyses for the PRISM thesis study. The PRISM implementation is installed from the commit recorded in `requirements-models.txt`.
 
 ## Analyses
 
-Open a notebook to see its saved figures and tables, or run all cells to
-recalculate the analysis from the included data and model results.
+The 12 notebooks load prepared numerical results and display tables and inline figures.
 
 | Analysis | Notebook |
 |---|---|
-| Benchmark performance and rankings | [Overview](notebooks/benchmark/01_overview.ipynb) |
-| Noise, mechanisms and confounding | [Sensitivity analysis](notebooks/benchmark/02_noise_mechanisms_confounding.ipynb) |
-| Seed variability and assumptions | [Stability analysis](notebooks/benchmark/03_stability_sortability_assumptions.ipynb) |
-| Graph sizes and numerical summaries | [10, 20 and 30 variables](notebooks/benchmark/05_graph_sizes.ipynb) |
-| Additional metrics across all conditions | [Metrics](notebooks/benchmark/06_metrics_by_condition.ipynb) |
-| Sortability across all conditions | [Var- and R²-sortability](notebooks/benchmark/sortability/01_all_conditions.ipynb) |
-| PRISM selection, performance and causal order | [Tuning](notebooks/prism/tuning.ipynb) |
-| PRISM numerical behavior | [Convergence](notebooks/prism/convergence.ipynb) |
-| Existence and direction estimates | [Prior quality](notebooks/prism/priors.ipynb) |
+| Benchmark performance, paired rankings, coverage, runtime and metrics | [Performance](notebooks/benchmark/01_performance.ipynb) |
+| Noise, mechanisms, confounding, assumptions, seed stability, sortability and family details | [Sensitivity and stability](notebooks/benchmark/02_sensitivity_stability.ipynb) |
+| Graph sizes, scalability, completion and runtime | [Graph sizes and scalability](notebooks/benchmark/03_graph_sizes_scalability.ipynb) |
+| Tuned/untuned Test/OOD comparison, parameters and family details | [Final comparison](notebooks/tuned/01_comparison.ipynb) |
+| PRISM selection scores, held-out performance and causal order | [Tuning](notebooks/prism/tuning.ipynb) |
+| PRISM numerical convergence and trajectories by family | [Convergence](notebooks/prism/convergence.ipynb) |
+| Existence and direction priors, representations and mixtures | [Prior quality](notebooks/prism/priors.ipynb) |
 | PRISM component contributions | [Ablation](notebooks/prism/ablation.ipynb) |
-| Tuned and untuned methods on test/OOD data | [Comparison](notebooks/tuned/01_comparison.ipynb) |
-| Search spaces and selected parameters | [Configurations](notebooks/tuned/02_parameters.ipynb) |
-| Computational scalability | [Accuracy and runtime](notebooks/scalability/01_accuracy_runtime.ipynb) |
-| Sachs | [Biological reference results](notebooks/sachs/01_comparison.ipynb) |
-| TCGA glioma | [Biological relationships](notebooks/tcga/01_biological.ipynb) |
-| Statistical comparisons | [Paired tests and rankings](notebooks/statistics/01_paired_comparisons.ipynb) |
+| Sachs performance, metrics and reference network | [Sachs](notebooks/sachs/01_comparison.ipynb) |
+| TCGA reference relationships, candidate edges and threshold sensitivity | [Biological relationships](notebooks/tcga/01_biological.ipynb) |
+| TCGA agreement across methods, cohorts and subtypes | [Agreement](notebooks/tcga/02_agreement.ipynb) |
+| Paired model rankings and comparison coverage | [Rankings](notebooks/statistics/01_paired_comparisons.ipynb) |
 
-Per-family notebooks and additional analyses are beside the corresponding main
-notebooks. The benchmark includes 36 comparison conditions plus a separate
-[Gaussian linear control](notebooks/benchmark/08_gaussian_linear_control.ipynb).
+Detailed family sections display all available families by default. Set `family` to one of the printed names to focus on a single family. The comparative 20-variable benchmark covers ten families, and the tuned/untuned evaluation covers six. The graph-size analyses cover 10, 15, 20 and 30 variables; dedicated scalability results extend to 500 variables.
 
-## Run the notebooks
+## Open the notebooks
 
-Use Python 3.11:
+Use Python 3.11 and the analysis dependencies:
 
 ```bash
 python -m venv .venv
@@ -44,125 +35,75 @@ python -m ipykernel install --user --name prism-analysis --display-name "PRISM (
 jupyter lab notebooks/
 ```
 
-Select the **PRISM (Python 3.11)** kernel. Tables and statistical summaries are
-calculated and displayed in the notebooks. Exported figures are written under
-the corresponding experiment in `results/`.
+Select the **PRISM (Python 3.11)** kernel. The saved numerical tables are included, so opening and running the notebooks requires neither model training nor data downloads.
 
 ## Repository layout
 
 ```text
-datasets/                 Observation arrays and biological references
+datasets/
+├── synthetic/             <condition>__seed_<seed>.npz
+├── sachs/                 Observations and reference graph
+└── tcga/                  Cohorts, subtypes and biological references
 results/
-├── benchmark/            Individual benchmark measurements and figures
-├── tuned/                Individual tuned/untuned measurements and figures
-├── prism/
-│   ├── tuning/           Selected-model scores and predictions
-│   ├── priors/           Estimated prior matrices
-│   ├── ablation/         Component ablations
-│   └── convergence/      Optimization traces and figures
-├── scalability/
-├── sachs/
-└── tcga/
-notebooks/                Analyses grouped by the same experiment names
-experiments/              Benchmark, tuning and dataset preparation scripts
-analysis/                 Data readers, statistical analysis and plotting functions
-configs/                  Study settings, selected parameters and package pins
+├── final/                 Final comparative benchmark and evaluation CSVs
+├── analysis/              Prepared numerical notebook tables and arrays
+├── benchmark/             Per-condition benchmark measurements and control
+├── tuned/                 Per-condition tuned/untuned measurements
+├── prism/                 Selection, priors, ablation and convergence results
+├── scalability/           Dedicated scalability measurements
+├── sachs/                 Sachs model measurements
+└── tcga/                  TCGA model outputs and numerical summaries
+notebooks/                 Presentation of the reported analyses
+analysis/                  Numerical calculations and visualization functions
+runs/                      Model fitting, numerical preparation and data processing
+configs/                   Study protocols, selected parameters and environments
+requirements-*.txt         Python dependency specifications
 ```
 
-Within an experiment, observation files and per-fit result tables use the same
-condition name: `datasets/<experiment>/<condition>.npz` and
-`results/<experiment>/<condition>.csv`. 
+Synthetic files are stored once per condition and dataset seed. They contain `X`, `X_raw`, `true_adj`, `latent_nodes` and `observed_conf_nodes` where available. Search, validation and evaluation samples share this folder; the configurations determine which seeds each stage uses. Dataset seeds identify data instances, while model seeds identify algorithm runs on those instances.
 
-Per-fit CSV columns are:
+The final comparative measurements are in `results/final/benchmark.csv`, `results/final/biological_benchmark.csv` and `results/final/evaluation.csv`. The evaluation contains 5,940 completed fits across six families and 15 dataset seeds. Per-condition CSVs under `results/benchmark/` and `results/tuned/` contain the corresponding measurements. Dataset-instance averages are the comparison units used in the reported paired analyses.
+
+The shared per-fit result fields are:
 
 ```text
 dataset,model,arm,dataset_seed,model_seed,condition_id,status,timed_out,n_nodes,n_samples,f1,fbeta,precision,recall,SHD,runtime_seconds
 ```
 
-`arm` distinguishes tuned and untuned configurations. `condition_id` identifies
-ablation variants, search/validation stages or TCGA constraints. AUPRC is retained
-separately for the prior analyses.
+The three aggregate source CSVs also retain measurement metadata. `arm` distinguishes tuned and untuned configurations; `condition_id` identifies an analysis condition or stage. `fbeta` denotes F0.5. Prior AUPRC evaluations are stored in the prepared prior-analysis tables.
 
-`requirements-analysis.txt` installs the notebook dependencies, including
-CausalDisco for R²-SortnRegress. `requirements-experiments.txt` adds the model
-implementations and the PRISM/causalgen commits in
-`configs/package-requirements.txt`. AVICI uses `requirements-avici.txt`.
-Full dependency snapshots for Python 3.11 on macOS ARM64 are in `configs/locks/`.
+## Numerical preparation and figures
 
-## Run new experiments
+`analysis/calculations.py` contains the numerical preparation functions. `runs/calculate_results.py` executes them and saves the outputs under `results/analysis/`. The `.pkl` bundles contain tables and arrays, preserving their types and indices; they contain no figures. They are included for notebook presentation and can be regenerated explicitly when inputs or analysis definitions change:
 
 ```bash
-python -m pip install -r requirements-experiments.txt
-python experiments/benchmark.py --study benchmark --nodes 20 --output results/new_runs/benchmark
-python experiments/benchmark.py --study tuned --output results/new_runs/tuned
-python experiments/tuning.py --model PRISM --output results/new_runs/prism_tuning
+python runs/calculate_results.py
 ```
 
-These commands show or save the execution plan. Add `--execute` to run it and
-`--resume` to continue an interrupted run. Omitting `--nodes` includes all stored
-benchmark graph sizes. Use `--model` to restrict a benchmark run to one method.
-Each script documents its options through `--help`. An individual fit can also select a
-sample directly from a dataset file:
+Numerical preparation includes graph-score evaluation, uncertainty summaries, paired statistical comparisons and the sorting baseline. The analysis dependency versions used for this preparation and notebook execution are pinned in `requirements-analysis.txt`.
 
-```bash
-python experiments/run_model.py --sample datasets/tuned/20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed.npz --dataset-seed 19 --model PRISM --output results/new_runs/prism_seed19
-```
+Notebooks load per-fit measurements directly from the source CSVs; no additional source-data bundle is stored. Calculated Wilcoxon and Friedman results are kept in `statistics.pkl`; benchmark and ablation presentation tables do not duplicate those tests. The Excel workbook is their consultation export.
 
-The PRISM search uses one 400-trial budget over the final parameter space.
-`configs/prism_winner.json` stores the selected parameters used in the included
-evaluations; `configs/frozen/frozen_winners.json` stores the baseline selections.
-Running tuning starts a new search. The notebooks reproduce the included final
-measurements without rerunning that search.
+Visualization functions are in `analysis/final_visualization.py`, `analysis/glioma_analysis.py` and `analysis/prism_convergence_figure.py`. Study-specific layouts also appear directly in notebook.
 
-| Setting | Model seeds per method |
+## Statistical comparison workbook
+
+`results/analysis/pvalues.xlsx` organizes the recorded Wilcoxon and Friedman results by dataset and configuration. It includes benchmark, tuned and untuned comparisons, pooled Test/OOD scopes, tuned-versus-untuned comparisons and PRISM ablations. The sheets retain the original p-values and the available Holm-adjusted p-values, with the number of paired blocks and test statistic. The index identifies every sheet and the recorded exclusions.
+
+The workbook is a static export of `results/analysis/statistics.pkl`, containing 8,778 between-method Wilcoxon comparisons, 84 Friedman results, 252 tuned-versus-untuned comparisons and 13 ablation comparisons. Exporting these tables does not rerun the statistical tests. The statistics notebook displays rankings and coverage rather than p-value tables.
+
+## Model runs and configurations
+
+`runs/run_model.py` fits one method on a stored sample and writes predictions and numerical measurements. It is called by `runs/benchmark.py` and `runs/tuning.py`. `runs/run_tcga.py` applies the joint-data TCGA constraint. Model fitting needs the additional dependencies in `requirements-runs.txt`; AVICI also needs `requirements-avici.txt` and its pretrained SCM weights.
+
+`configs/baseline_study.json` defines the baseline search spaces, parameter settings, trial budgets, thresholds and search/validation/test seeds. `configs/prism_study.json` defines the PRISM search with its 400-trial budget. The selected PRISM parameters are in `configs/prism_winner.json`; baseline selections and untuned settings are in `configs/frozen/`. Package inventories for model-fitting environments are under `configs/models/`.
+
+| Study | Model-seed range |
 |---|---|
 | Benchmark, its control, Sachs and TCGA | 0–14 |
 | Search, validation, held-out evaluation and ablation | 0–4 |
-| Dedicated scalability experiments | 0–2 |
+| Dedicated scalability study | 0–2 |
 
+`runs/prepare_tcga/` contains the cohort-processing code, and `configs/tcga_sources.json` records the data sources. Prepared cohorts and references are included under `datasets/tcga/`. 
 
-
-AVICI requires its pretrained SCM weights and an optional JAX environment. The
-original dependency combination is:
-
-```bash
-python3.11 -m venv .venv-avici
-source .venv-avici/bin/activate
-python -m pip install -r requirements-avici.txt
-python -c 'import avici; avici.load_pretrained(download="scm-v0", cache_path="datasets/avici/pretrained")'
-```
-
-Use `AVICI_CACHE_DIR` for an existing cache containing `models--larslorch--avici`.
-Run the AVICI experiment commands with the Python environment holding those
-dependencies.
-
-## TCGA preparation
-
-The source selection and processing scripts are in `experiments/prepare_tcga/`:
-
-```bash
-python experiments/prepare_tcga/prepare.py --stage raw
-python experiments/prepare_tcga/prepare.py --stage preprocess
-python experiments/prepare_tcga/prepare.py --stage rna
-```
-
-Install the R dependencies with:
-
-```bash
-Rscript experiments/prepare_tcga/install_dependencies.R
-```
-
-The optional `download_validate_tcga_rnaseq.R` GDC query workflow also needs
-`TCGAbiolinks` and `SummarizedExperiment`; enable their installation with
-`TCGA_INSTALL_BIOCONDUCTOR=true Rscript experiments/prepare_tcga/install_dependencies.R`.
-These Bioconductor packages are not needed by the streaming preparation workflow.
-R dependencies are installed from their repositories and are not version locked.
-
-The workflow uses
-pinned source files and RNA identifiers and writes to
-`results/new_runs/tcga_preparation/` by default. `--work-dir` selects another
-location. The prepared cohorts and reference relationships are already included,
-so the notebooks require neither downloads nor R.
-
-Large NumPy arrays are stored with Git LFS. After cloning, run `git lfs pull`
-if the arrays have not been downloaded automatically.
+Large NumPy files use Git LFS. After cloning, run `git lfs pull` if the arrays were not downloaded automatically.

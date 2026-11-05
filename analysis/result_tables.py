@@ -1,4 +1,8 @@
-"""Data preparation, statistical summaries and plotting inputs for the notebooks."""
+"""Prepare numerical tables from the final per-fit measurements.
+
+Numerical preparation is called by runs/calculate_results.py. Presentation
+notebooks read saved summaries and load per-fit CSVs for plotting.
+"""
 
 from __future__ import annotations
 
@@ -9,19 +13,16 @@ from pathlib import Path
 from typing import Iterable
 
 import final_visualization as fv
-from condition_data import load_results, load_sample
 import numpy as np
 import pandas as pd
 from Wilcoxon_test.wilcoxon_test import build_wilcoxon_rank, paired_wilcoxon as wilcoxon
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "experiments"))
+sys.path.insert(0, str(ROOT / "runs"))
 from metrics import order_fnr
-publication = ROOT
-OUTPUT = ROOT / "results/benchmark/figures"
-ALIGNED_BIOLOGICAL = ROOT / "results/benchmark"
-ALIGNED_PRIORS = ROOT / "results/prism/priors/aligned"
-DATASET_SEEDS = (19, 47, 50, 52, 71, 75, 77, 102, 125, 158, 222, 237, 308, 402, 603)
+BIOLOGICAL_RESULTS = ROOT / "results/final/biological_benchmark.csv"
+PRIORS = ROOT / "results/prism/priors"
+DATASET_SEEDS = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
 TEST_FAMILIES = (
     "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
@@ -36,7 +37,7 @@ SIX_FAMILIES = (*OOD_FAMILIES, *TEST_FAMILIES)
 FAMILY_LABELS = {
     TEST_FAMILIES[0]: "ER, non Gaussian mixed",
     TEST_FAMILIES[1]: "MultiOmics, Laplace mixed",
-    TEST_FAMILIES[2]: "Oncogene, Laplace mixed",
+    TEST_FAMILIES[2]: "Oncogene, Gaussian mixed",
     OOD_FAMILIES[0]: "ER, Gaussian linear",
     OOD_FAMILIES[1]: "ER, Gaussian mixed",
     OOD_FAMILIES[2]: "ER, non Gaussian linear",
@@ -49,9 +50,9 @@ MODEL_LABELS = {
 }
 
 
-def load_historical_benchmark():
-    """Load archived graph sizes; aligned sources supersede historical 20-node fits."""
-    frame = load_results("benchmark")
+def load_graph_size_results():
+    """Load reported results for graph sizes other than 20 variables."""
+    frame = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((ROOT / "results/benchmark").glob("*.csv"))], ignore_index=True)
     return frame.loc[frame.n_nodes.ne(20)].copy()
 
 
@@ -59,22 +60,29 @@ def model_label(value: object) -> str:
     return MODEL_LABELS.get(str(value), str(value).replace("_", " "))
 
 
-def ensure_output_dirs(topic=None) -> None:
-    """Keep exported figures beside their experiment results."""
-    global OUTPUT
-    if topic is not None:
-        OUTPUT = ROOT / "results" / topic / "figures"
-    OUTPUT.mkdir(parents=True, exist_ok=True)
+def load_scalability_results() -> pd.DataFrame:
+    """Load per-fit scalability measurements directly from their source CSVs."""
+    graph_sizes = prepare_metrics(load_graph_size_results())
+    base = pd.concat(
+        [graph_sizes, load_final_results()['benchmark_with_biological']],
+        ignore_index=True, sort=False,
+    )
+    return fv.load_scalability_data(visualization_data(base), project_root=ROOT)
+
+
 
 
 def result_view(frame: pd.DataFrame) -> pd.DataFrame:
     """Return per-fit results in the public schema."""
-    from condition_data import result_table
-    return result_table(frame)
+    return frame.copy()
 
 
 def prepare_metrics(frame: pd.DataFrame) -> pd.DataFrame:
     out = frame.copy()
+    out["model"] = out["model"].replace({"DAGMA_Reg": "PRISM", "DAGMA_Prior": "PRISM"})
+    out["arm"] = out["arm"].fillna("untuned") if "arm" in out else "untuned"
+    out["n_nodes"] = out["n_nodes"].fillna(pd.to_numeric(out.dataset.str.extract(r"^(\d+)nodes", expand=False)))
+    out["n_samples"] = out["n_samples"].fillna(2000)
     if "timed_out" not in out:
         out["timed_out"] = out["status"].eq("timeout")
     else:
@@ -103,15 +111,21 @@ def visualization_data(frame: pd.DataFrame) -> fv.FinalVisualizationData:
     )
 
 
-def load_aligned_sources() -> dict[str, object]:
-    benchmark_all = prepare_metrics(load_results("benchmark", n_variables=20))
+def load_final_results() -> dict[str, object]:
+    benchmark_all = prepare_metrics(pd.concat([pd.read_csv(ROOT / "results/final/benchmark.csv", low_memory=False, float_precision="round_trip"), pd.read_csv(ROOT / "results/final/biological_benchmark.csv", low_memory=False, float_precision="round_trip")], ignore_index=True))
     benchmark_biological = benchmark_all.loc[
         benchmark_all.dataset.isin(TEST_FAMILIES[1:])
     ].copy()
     benchmark = benchmark_all.loc[
         ~benchmark_all.dataset.isin(TEST_FAMILIES[1:])
     ].copy()
-    complete = prepare_metrics(load_results("evaluation"))
+    complete = prepare_metrics(pd.read_csv(ROOT / "results/final/evaluation.csv", low_memory=False, float_precision="round_trip"))
+    if len(complete) != 5940 or not complete.finished.all():
+        raise ValueError("Final evaluation requires 5,940 completed fits")
+    if set(complete.dataset_seed.astype(int)) != set(DATASET_SEEDS):
+        raise ValueError("Final evaluation has unexpected dataset seeds")
+    if complete.duplicated(["arm", "dataset", "dataset_seed", "model", "model_seed"]).any():
+        raise ValueError("Duplicate final fit identities")
     six_untuned = complete.loc[
         complete["arm"].eq("untuned") & complete["dataset"].isin(SIX_FAMILIES)
     ].copy()
@@ -120,7 +134,7 @@ def load_aligned_sources() -> dict[str, object]:
         "complete": complete,
         "six_untuned": six_untuned,
         "benchmark_biological": benchmark_biological,
-        "benchmark_biological_source": ALIGNED_BIOLOGICAL,
+        "benchmark_biological_source": BIOLOGICAL_RESULTS,
         "benchmark_data": visualization_data(benchmark),
         "benchmark_with_biological": benchmark_all,
         "benchmark_with_biological_data": visualization_data(benchmark_all),
@@ -128,11 +142,6 @@ def load_aligned_sources() -> dict[str, object]:
     }
 
 
-def save_pdf(fig, filename: str) -> Path:
-    ensure_output_dirs()
-    target = OUTPUT / filename
-    fig.savefig(target, format="pdf", bbox_inches="tight")
-    return target
 
 
 def seed_means(
@@ -161,8 +170,8 @@ def prism_performance(complete: pd.DataFrame) -> pd.DataFrame:
         scores = selected.loc[selected["dataset"].eq(family), "fbeta"]
         order_values = []
         for seed in DATASET_SEEDS:
-            prior_path = ALIGNED_PRIORS / f"{family}__seed_{seed}.npz"
-            with load_sample("evaluation", family, seed) as data:
+            prior_path = PRIORS / f"{family}__seed_{seed}.npz"
+            with np.load(ROOT / "datasets/synthetic" / f"{family}__seed_{int(seed)}.npz", allow_pickle=False) as data:
                 B = np.asarray(data["true_adj"]) != 0
             with np.load(prior_path, allow_pickle=False) as prior:
                 order = np.asarray(prior["order"], dtype=int)
@@ -287,7 +296,7 @@ def ranks_by_scope(complete: pd.DataFrame, metric: str = "fbeta") -> pd.DataFram
 
 
 def benchmark_ranks(benchmark: pd.DataFrame, biological: pd.DataFrame) -> pd.DataFrame:
-    """Per-condition ranks for the corrected benchmark; HighGaussian Linear is absent."""
+    """Calculate paired per-condition ranks for the final comparative benchmark."""
     bio = biological[biological["dataset"].isin(TEST_FAMILIES[1:])]
     combined = pd.concat([benchmark, bio], ignore_index=True, sort=False)
     blocks = (
@@ -342,9 +351,9 @@ def prior_quality(scores: pd.DataFrame, *, include_extra=False) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def aligned_ablation_table() -> pd.DataFrame:
+def ablation_table() -> pd.DataFrame:
     """Ablation summary using completed fits only; unsuccessful fits are excluded."""
-    fits = load_results("ablation").assign(family=lambda frame: frame.dataset)
+    fits = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((ROOT / "results/prism/ablation").glob("*.csv"))], ignore_index=True).assign(family=lambda frame: frame.dataset)
     completed = fits.loc[fits["status"].eq("finished")].copy()
     completed["fbeta"] = pd.to_numeric(completed["fbeta"], errors="coerce")
     completed = completed.dropna(subset=["fbeta"])
@@ -399,12 +408,8 @@ def aligned_ablation_table() -> pd.DataFrame:
         "oracle": "Oracle prior",
     }
 
-    def pvalue(value: float) -> str:
-        return "$<0.001$" if value < 0.001 else f"${value:.3f}$"
-
     rng = np.random.default_rng(20260920)
     comparisons: dict[str, dict[str, float]] = {}
-    raw_pvalues: dict[str, float] = {}
     full_values = macro_by_condition["full"]
     for condition in order[1:]:
         paired = pd.concat(
@@ -417,23 +422,12 @@ def aligned_ablation_table() -> pd.DataFrame:
         ).dropna()
         delta = (paired["full"] - paired["condition"]).to_numpy(dtype=float)
         draws = rng.choice(delta, size=(10000, len(delta)), replace=True).mean(axis=1)
-        try:
-            raw_pvalue = float(wilcoxon(delta, alternative="two-sided").pvalue)
-        except ValueError:
-            raw_pvalue = 1.0
-        raw_pvalues[condition] = raw_pvalue
         comparisons[condition] = {
             "loss": float(delta.mean()),
             "ci_low": float(np.quantile(draws, 0.025)),
             "ci_high": float(np.quantile(draws, 0.975)),
             "n": int(len(delta)),
         }
-    adjusted: dict[str, float] = {}
-    running = 0.0
-    ordered_pvalues = sorted(raw_pvalues, key=raw_pvalues.get)
-    for index, condition in enumerate(ordered_pvalues):
-        running = max(running, min(1.0, (len(ordered_pvalues) - index) * raw_pvalues[condition]))
-        adjusted[condition] = running
     rows = []
     for condition in order:
         condition_summary = summary.loc[condition]
@@ -442,14 +436,13 @@ def aligned_ablation_table() -> pd.DataFrame:
             "$F_{0.5}$": f"${condition_summary['fbeta']:.3f} \\pm {condition_summary['fbeta_sd']:.3f}$",
         }
         if condition == "full":
-            row.update({"Loss": "--", "95\\% CI": "--", "Holm $p$": "--"})
+            row.update({"Loss": "--", "95\\% CI": "--"})
         else:
             difference = comparisons[condition]
             row.update(
                 {
                     "Loss": f"${difference['loss']:.3f}$",
                     "95\\% CI": f"$[{difference['ci_low']:.3f},\\,{difference['ci_high']:.3f}]$",
-                    "Holm $p$": pvalue(adjusted[condition]),
                 }
             )
         rows.append(row)
@@ -465,10 +458,10 @@ def raw_sortability() -> pd.DataFrame:
 
     family = "20nodes_EB_obsconf0_latconf0_Gaussian_Linear"
     rows = []
-    measurements = load_results("benchmark")
+    measurements = pd.concat([pd.read_csv(ROOT / "results/final/benchmark.csv", low_memory=False, float_precision="round_trip"), pd.read_csv(ROOT / "results/final/biological_benchmark.csv", low_memory=False, float_precision="round_trip")], ignore_index=True)
     seeds = sorted(measurements.loc[measurements.dataset.eq(family), "dataset_seed"].unique())
     for seed in seeds:
-        with load_sample("benchmark", family, int(seed)) as sample:
+        with np.load(ROOT / "datasets/synthetic" / f"{family}__seed_{int(seed)}.npz", allow_pickle=False) as sample:
             observations = sample["X_raw"]
             values = calculate_varsortability(observations, sample["true_adj"])
             rows.append(dict(dataset_seed=seed, dataset=family, **values))

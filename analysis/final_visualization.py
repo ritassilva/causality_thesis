@@ -1,15 +1,9 @@
-"""Reusable visualisations for benchmark and model evaluation results.
+"""Plotting and numerical preparation for the reported causal-discovery results.
 
-The module deliberately separates quantities that already exist in the result
-CSVs from descriptive summaries computed for a figure:
-
-* graph metrics are read from the saved per-condition results;
-* Wilcoxon-Holm ranks use paired dataset blocks;
-* model seeds are averaged inside each independent dataset block;
-* uncertainty is then computed across dataset seeds or configurations.
-
-No public plotting function calls :func:`matplotlib.pyplot.show` and saving is
-always opt-in.  Every plot returns the exact tidy data used to draw it.
+Notebook figures consume saved measurements and prepared analysis tables.
+Descriptive grouping and visual layout are performed when drawing figures;
+graph scores and statistical comparisons are prepared separately. Functions
+return Matplotlib figures and their plotted data without exporting image files.
 """
 
 from __future__ import annotations
@@ -128,7 +122,7 @@ GRAPH_TYPE_DISPLAY_LABELS: dict[str, str] = {
     "ModMultiOmics": "MultiOmics",
     "ModOncogene": "Oncogene",
 }
-COMMON_ROBUSTNESS_DATASET_SEEDS: tuple[int, ...] = (19, 47, 50, 52, 71, 75, 77, 102, 125, 158, 222, 237, 308, 402, 603)
+COMMON_ROBUSTNESS_DATASET_SEEDS: tuple[int, ...] = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
 DEFAULT_ROBUSTNESS_FAMILIES: tuple[str, ...] = (
     "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
@@ -138,7 +132,7 @@ DEFAULT_ROBUSTNESS_FAMILIES: tuple[str, ...] = (
     "20nodes_EB_obsconf0_latconf0_NonGaussian_Linear",
 )
 DEFAULT_ROBUSTNESS_MODELS: tuple[str, ...] = (*DEFAULT_MODEL_ORDER, "PRISM")
-MODEL_NAME_ALIASES: dict[str, str] = {}
+MODEL_NAME_ALIASES: dict[str, str] = {"DAGMA_Reg": "PRISM", "DAGMA_Prior": "PRISM"}
 MODEL_DISPLAY_LABELS: dict[str, str] = {
     "DAGMA_Linear": "DAGMA Linear",
     "DAGMA_Nonlinear": "DAGMA Nonlinear",
@@ -403,8 +397,8 @@ def load_final_visualization_data(
     statistical test or Wilcoxon rank.
     """
     if all(value is None for value in (metrics_path, rank_by_dataset_path, rank_overall_path, coverage_by_dataset_path, friedman_by_dataset_path)):
-        from result_tables import load_aligned_sources, visualization_data
-        return visualization_data(load_aligned_sources()["benchmark_with_biological"])
+        from result_tables import load_final_results, visualization_data
+        return visualization_data(load_final_results()["benchmark_with_biological"])
     if metrics_path is None:
         raise ValueError("Provide metrics_path when loading custom result tables")
     supplied = {
@@ -648,7 +642,7 @@ def build_predicted_edge_orientation_table(
 ) -> pd.DataFrame:
     """Summarise fully oriented versus other predicted adjacencies.
 
-    The legacy benchmark CSV does not store endpoint counts directly.  Its
+    The benchmark measurements do not store endpoint counts directly. Their
     classic precision and recall, however, were computed only from fully
     directed predictions.  Thus ``recall * n_true_edges / precision`` recovers
     their count whenever precision is positive.  Runs with zero precision are
@@ -1077,13 +1071,6 @@ def _alpha_controlled_plot(function):
     return wrapper
 
 
-def _save(fig: plt.Figure, save_path: str | Path | None, dpi: int, transparent: bool) -> None:
-    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
-    if save_path is None:
-        return
-    path = Path(save_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=dpi, transparent=transparent, bbox_inches="tight")
 
 
 def load_robustness_fits(
@@ -1091,8 +1078,8 @@ def load_robustness_fits(
 ) -> pd.DataFrame:
     """Load and validate the per-fit tuning/generalisation robustness table."""
     if path is None:
-        from condition_data import load_results
-        return add_fbeta(_canonicalize_model_names(load_results("evaluation")))
+
+        return add_fbeta(_canonicalize_model_names(pd.read_csv(_project_root(project_root) / "results/final/evaluation.csv", low_memory=False, float_precision="round_trip")))
     source = Path(path)
     if not source.exists():
         raise FileNotFoundError(f"Robustness fits table not found: {source}")
@@ -1535,8 +1522,6 @@ def plot_family_robustness(
     legend_title: str | None = None,
     grid: bool = True,
     despine: bool = True,
-    save_dir: str | Path | None = None,
-    filename_template: str = "robustness_{family}_{metric}.png",
     dpi: int = 300,
     transparent: bool = False,
 ) -> dict[str, tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]]:
@@ -1870,12 +1855,7 @@ def plot_family_robustness(
         if despine:
             _despine(ax, font_size=font_size)
         fig.tight_layout()
-        if save_dir is not None:
-            safe_family = re.sub("[^A-Za-z0-9_.-]+", "_", family).strip("_")
-            filename = filename_template.format(
-                family=safe_family, dataset=safe_family, metric=metric
-            )
-            _save(fig, Path(save_dir) / filename, dpi, transparent)
+        _apply_visual_alpha(fig, _PLOT_ALPHA.get())
         family_seed_means = seed_means[seed_means["dataset"].astype(str).eq(family)].copy()
         outputs[family] = (
             fig,
@@ -1962,7 +1942,6 @@ def plot_metric_and_timeouts(
     grid: bool = True,
     despine: bool = True,
     apply_layout: bool = True,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> (
@@ -2456,7 +2435,7 @@ def plot_metric_and_timeouts(
         fig.suptitle(title, fontsize=title_size + 1)
     if apply_layout:
         fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     output = {
         "block_means": plotted.reset_index(drop=True),
         "coverage": scope_coverage.reset_index(drop=True),
@@ -2525,7 +2504,6 @@ def plot_metric_boxplot_grid(
     title_size: float = DEFAULT_TITLE_SIZE,
     grid: bool = True,
     despine: bool = True,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, dict[str, pd.DataFrame]]]:
@@ -2673,7 +2651,7 @@ def plot_metric_boxplot_grid(
         wspace=panel_wspace,
         hspace=panel_hspace,
     )
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (fig, made_axes, outputs)
 
 
@@ -2706,7 +2684,6 @@ def plot_metric_polar(
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
     grid: bool = True,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -2861,7 +2838,7 @@ def plot_metric_polar(
             labelspacing=0.55,
         )
     fig.subplots_adjust(left=0.08, right=0.73 if show_legend else 0.95, top=0.88, bottom=0.1)
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -3318,7 +3295,6 @@ def plot_rank_variation(
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
     grid: bool = True,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, pd.DataFrame]]:
@@ -3571,7 +3547,7 @@ def plot_rank_variation(
         fig.suptitle(title, fontsize=title_size + 1)
     _despine(axes_arr, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     summary_rows = []
     for model, group in rank_rows.groupby("model", observed=True):
         summary = _uncertainty_summary(
@@ -3687,7 +3663,6 @@ def plot_rank_scatter_by_dataset(
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
     grid: bool = True,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -3802,7 +3777,7 @@ def plot_rank_scatter_by_dataset(
     )
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -3862,7 +3837,6 @@ def plot_rank_heatmap_by_dataset(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -3986,7 +3960,7 @@ def plot_rank_heatmap_by_dataset(
         ax.set_title(title or f"{metric_label} rank by dataset", fontsize=title_size, pad=14)
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -4170,7 +4144,6 @@ def plot_noise_heatmap(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -4225,7 +4198,7 @@ def plot_noise_heatmap(
     ax.set_ylabel(ylabel, fontsize=font_size)
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (fig, ax, {"table": table, "summary": summary, "coverage": coverage})
 
 
@@ -4261,7 +4234,6 @@ def plot_mechanism_heatmap(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, dict[str, pd.DataFrame]]]:
@@ -4341,7 +4313,7 @@ def plot_mechanism_heatmap(
         )
     _despine(axes_array, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (fig, axes_array, outputs)
 
 
@@ -4405,8 +4377,8 @@ def load_scalability_data(
         base["result_source"] = "main_benchmark"
         frames.append(base)
     if scalability_paths is None:
-        from condition_data import load_results
-        final = _prepare_scalability_frame(load_results("scalability"))
+
+        final = _prepare_scalability_frame(pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((root / "results/scalability").glob("*.csv"))], ignore_index=True))
         final["result_source"] = "results/scalability"
         frames.append(final)
         scalability_paths = []
@@ -4662,30 +4634,6 @@ def _independent_family_axes(
     return (figures, axes_by_family)
 
 
-def _save_scalability_figures(
-    figures: Mapping[str, plt.Figure],
-    save_path: str | Path | None,
-    *,
-    dpi: int,
-    transparent: bool,
-) -> None:
-    """Save a family-to-figure mapping using distinct, predictable names."""
-    if save_path is None:
-        return
-    raw = str(save_path)
-    base = Path(save_path)
-    multiple = len(figures) > 1
-    for family, figure in figures.items():
-        safe_family = re.sub("[^A-Za-z0-9]+", "_", family).strip("_")
-        if "{family}" in raw:
-            destination = Path(raw.format(family=safe_family))
-        elif base.suffix:
-            destination = (
-                base.with_name(f"{base.stem}_{safe_family}{base.suffix}") if multiple else base
-            )
-        else:
-            destination = base / f"{safe_family}.png"
-        _save(figure, destination, dpi, transparent)
 
 
 def _draw_scalability_curve(
@@ -4783,9 +4731,6 @@ def plot_scalability_f1(
     errorbar_alpha: float = 0.35,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
-    coverage_save_path: str | Path | None = None,
-    zoom_save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -4867,7 +4812,8 @@ def plot_scalability_f1(
             figures[family].tight_layout()
         axes_array = np.asarray(list(axes_by_family.values()), dtype=object)
         fig = figures[family_keys[0]]
-        _save_scalability_figures(figures, save_path, dpi=dpi, transparent=transparent)
+        for figure in figures.values():
+            _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     else:
         combined_coverage = show_coverage and (not separate_coverage)
         fig, axes_array, combined_coverage_axes = _scalability_axes(
@@ -4900,7 +4846,7 @@ def plot_scalability_f1(
             fig.suptitle(f"{metric_label} scalability", fontsize=title_size + 1)
         _despine(axes_array, font_size=font_size)
         fig.tight_layout()
-        _save(fig, save_path, dpi, transparent)
+        _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     zoom_figures: dict[str, plt.Figure] = {}
     zoom_axes_by_family: dict[str, plt.Axes] = {}
     zoom_summary = summary.iloc[0:0].copy()
@@ -4929,7 +4875,8 @@ def plot_scalability_f1(
             )
             _despine(axis, font_size=font_size)
             zoom_figures[family].tight_layout()
-        _save_scalability_figures(zoom_figures, zoom_save_path, dpi=dpi, transparent=transparent)
+        for figure in zoom_figures.values():
+            _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     coverage_figures: dict[str, plt.Figure] = {}
     coverage_axes_by_family: dict[str, plt.Axes] = {}
     coverage_axes_array = np.asarray([], dtype=object)
@@ -4965,9 +4912,8 @@ def plot_scalability_f1(
             coverage_figures[family].tight_layout()
         if coverage_fig is None and coverage_figures:
             coverage_fig = coverage_figures[family_keys[0]]
-        _save_scalability_figures(
-            coverage_figures, coverage_save_path, dpi=dpi, transparent=transparent
-        )
+        for figure in coverage_figures.values():
+            _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     return (
         fig,
         axes_array,
@@ -5107,7 +5053,6 @@ def plot_scalability_f1_highlighted(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -5151,7 +5096,8 @@ def plot_scalability_f1_highlighted(
         )
         _despine(axis, font_size=font_size)
         figures[family].tight_layout()
-    _save_scalability_figures(figures, save_path, dpi=dpi, transparent=transparent)
+    for figure in figures.values():
+        _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     axes_array = np.asarray(list(axes_by_family.values()), dtype=object)
     return (
         figures[family_keys[0]],
@@ -5181,7 +5127,6 @@ def plot_scalability_f1_heatmap(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -5223,7 +5168,8 @@ def plot_scalability_f1_heatmap(
             axis.set_title(_dataset_display_title(labels.get(family, family)), fontsize=title_size)
         _despine(axis, font_size=font_size)
         figures[family].tight_layout()
-    _save_scalability_figures(figures, save_path, dpi=dpi, transparent=transparent)
+    for figure in figures.values():
+        _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     axes_array = np.asarray(list(axes_by_family.values()), dtype=object)
     return (
         figures[family_keys[0]],
@@ -5258,7 +5204,6 @@ def plot_scalability_f1_retention(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -5338,7 +5283,8 @@ def plot_scalability_f1_retention(
         )
         _despine(axis, font_size=font_size)
         figures[family].tight_layout()
-    _save_scalability_figures(figures, save_path, dpi=dpi, transparent=transparent)
+    for figure in figures.values():
+        _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     axes_array = np.asarray(list(axes_by_family.values()), dtype=object)
     return (
         figures[family_keys[0]],
@@ -5396,9 +5342,6 @@ def plot_scalability_runtime(
     coverage_axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
-    zoom_save_path: str | Path | None = None,
-    coverage_save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -5515,7 +5458,8 @@ def plot_scalability_runtime(
             figures[family].tight_layout()
         axes_array = np.asarray(list(axes_by_family.values()), dtype=object)
         fig = figures[family_keys[0]]
-        _save_scalability_figures(figures, save_path, dpi=dpi, transparent=transparent)
+        for figure in figures.values():
+            _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     else:
         combined_coverage = show_coverage and (not separate_coverage)
         fig, axes_array, combined_coverage_axes = _scalability_axes(
@@ -5550,7 +5494,7 @@ def plot_scalability_runtime(
             )
         _despine(axes_array, font_size=font_size)
         fig.tight_layout()
-        _save(fig, save_path, dpi, transparent)
+        _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     zoom_figures: dict[str, plt.Figure] = {}
     zoom_axes_by_family: dict[str, plt.Axes] = {}
     zoom_summary = all_summary.iloc[0:0].copy()
@@ -5579,7 +5523,8 @@ def plot_scalability_runtime(
             )
             _despine(axis, font_size=font_size)
             zoom_figures[family].tight_layout()
-        _save_scalability_figures(zoom_figures, zoom_save_path, dpi=dpi, transparent=transparent)
+        for figure in zoom_figures.values():
+            _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     coverage_figures: dict[str, plt.Figure] = {}
     coverage_axes_by_family: dict[str, plt.Axes] = {}
     coverage_axes_array = np.asarray([], dtype=object)
@@ -5609,9 +5554,8 @@ def plot_scalability_runtime(
             )
             _despine(axis, font_size=font_size)
             coverage_figures[family].tight_layout()
-        _save_scalability_figures(
-            coverage_figures, coverage_save_path, dpi=dpi, transparent=transparent
-        )
+        for figure in coverage_figures.values():
+            _apply_visual_alpha(figure, _PLOT_ALPHA.get())
     return (
         fig,
         axes_array,
@@ -5664,7 +5608,6 @@ def _plot_seed_stability(
     ax: plt.Axes | None,
     font_size: float,
     title_size: float,
-    save_path: str | Path | None,
     dpi: int,
     transparent: bool,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -5854,7 +5797,7 @@ def _plot_seed_stability(
     ax.grid(axis="y" if model_axis == "x" else "x", alpha=0.25)
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -5894,7 +5837,6 @@ def plot_dataset_seed_stability(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -5934,7 +5876,7 @@ def plot_dataset_seed_stability(
         ax=ax,
         font_size=font_size,
         title_size=title_size,
-        save_path=save_path,
+
         dpi=dpi,
         transparent=transparent,
     )
@@ -5968,7 +5910,6 @@ def plot_model_seed_stability(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -6008,7 +5949,7 @@ def plot_model_seed_stability(
         ax=ax,
         font_size=font_size,
         title_size=title_size,
-        save_path=save_path,
+
         dpi=dpi,
         transparent=transparent,
     )
@@ -6047,7 +5988,6 @@ def plot_confounding_f1(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -6162,7 +6102,7 @@ def plot_confounding_f1(
     ax.legend(bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=max(6, font_size - 1))
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -6258,7 +6198,6 @@ def plot_confounding_false_positive_rates(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -6411,7 +6350,7 @@ def plot_confounding_false_positive_rates(
     ax.legend(fontsize=max(6, font_size - 1))
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -6419,7 +6358,7 @@ def plot_confounding_false_positive_rates(
     )
 
 
-def plot_varsortability_vs_f1(
+def prepare_varsortability_data(
     data: FinalVisualizationData,
     *,
     metric: str = "f1",
@@ -6456,10 +6395,9 @@ def plot_varsortability_vs_f1(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
-) -> tuple[plt.Figure, np.ndarray, dict[str, pd.DataFrame]]:
+) -> dict[str, pd.DataFrame]:
     """Plot R²-sortability or raw-data varsortability against model F1.
 
     If ``varsortability_values`` is omitted, this function imports and calls
@@ -6598,6 +6536,57 @@ def plot_varsortability_vs_f1(
             }
         )
     model_summary = pd.DataFrame(summary_rows)
+    return dict(points=points, model_summary=model_summary, varsortability_values=varsortability_values, baseline_values=baseline_values)
+
+
+def plot_varsortability_vs_f1(
+    data: FinalVisualizationData,
+    *,
+    metric: str = "f1",
+    varsortability_values: pd.DataFrame | None = None,
+    include_r2_sort_regress: bool = False,
+    r2_sort_regress_values: pd.DataFrame | None = None,
+    r2_sort_regress_label: str = "R²-SortnRegress",
+    sortability: str = "r2_sortability",
+    project_root: str | Path | None = None,
+    dataset_roots: Iterable[str | Path] | None = None,
+    datasets: Any = None,
+    n_nodes: Any = None,
+    graph_type: Any = None,
+    noise: Any = None,
+    mechanism: Any = None,
+    obs_conf: Any = 0,
+    lat_conf: Any = 0,
+    models: Any = None,
+    filters: Mapping[str, Any] | None = None,
+    coverage_policy: str = "complete",
+    min_completed_runs: int | None = None,
+    min_coverage_fraction: float | None = None,
+    model_order: Sequence[str] | None = None,
+    model_colors: Mapping[str, str] | None = None,
+    show_regression: bool = True,
+    columns: int = 4,
+    title: str | None = None,
+    show_title: bool = True,
+    show_metric_title: bool = True,
+    show_model_titles: bool = True,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    figsize: tuple[float, float] | None = None,
+    axes: Sequence[plt.Axes] | None = None,
+    font_size: float = DEFAULT_FONT_SIZE,
+    title_size: float = DEFAULT_TITLE_SIZE,
+    dpi: int = 300,
+    transparent: bool = False,
+    prepared_data: dict | None = None,
+) -> tuple[plt.Figure, np.ndarray, dict[str, pd.DataFrame]]:
+    """Draw sortability and model F1 using precomputed numerical data."""
+    if prepared_data is None:
+        prepared_data = prepare_varsortability_data(data, metric=metric, varsortability_values=varsortability_values, include_r2_sort_regress=include_r2_sort_regress, r2_sort_regress_values=r2_sort_regress_values, r2_sort_regress_label=r2_sort_regress_label, sortability=sortability, project_root=project_root, dataset_roots=dataset_roots, datasets=datasets, n_nodes=n_nodes, graph_type=graph_type, noise=noise, mechanism=mechanism, obs_conf=obs_conf, lat_conf=lat_conf, models=models, filters=filters, coverage_policy=coverage_policy, min_completed_runs=min_completed_runs, min_coverage_fraction=min_coverage_fraction, model_order=model_order, model_colors=model_colors, show_regression=show_regression, columns=columns, title=title, show_title=show_title, show_metric_title=show_metric_title, show_model_titles=show_model_titles, xlabel=xlabel, ylabel=ylabel, figsize=figsize, axes=axes, font_size=font_size, title_size=title_size, dpi=dpi, transparent=transparent)
+    points = prepared_data['points']
+    model_summary = prepared_data['model_summary']
+    varsortability_values = prepared_data['varsortability_values']
+    baseline_values = prepared_data['baseline_values']
     model_names = _ordered_models(points["model"].unique(), model_order=model_order)
     columns = max(1, min(int(columns), len(model_names)))
     rows = math.ceil(len(model_names) / columns)
@@ -6655,7 +6644,7 @@ def plot_varsortability_vs_f1(
         fig.suptitle(title or f"{sortability_label} versus {label}", fontsize=title_size)
     _despine(axes_array[: len(model_names)], font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         axes_array[: len(model_names)],
@@ -6763,7 +6752,6 @@ def plot_assumption_match_heatmap(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
@@ -6853,7 +6841,7 @@ def plot_assumption_match_heatmap(
     ax.set_ylabel(ylabel, fontsize=font_size)
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         ax,
@@ -7255,7 +7243,6 @@ def plot_assumption_degradation_forest(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, pd.DataFrame]]:
@@ -7352,7 +7339,7 @@ def plot_assumption_degradation_forest(
         )
     _despine(axes_array[: len(assumption_names)], font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (fig, axes_array[: len(assumption_names)], output)
 
 
@@ -7424,7 +7411,6 @@ def plot_model_assumption_table(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, plt.Axes, pd.DataFrame]:
@@ -7465,7 +7451,7 @@ def plot_model_assumption_table(
     if show_title and title:
         ax.set_title(title, fontsize=title_size, pad=14)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (fig, ax, table)
 
 
@@ -7498,9 +7484,9 @@ def plot_assumption_degradation_heatmap(
     ax: plt.Axes | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
+    prepared_data: dict | None = None,
 ) -> tuple[plt.Figure, plt.Axes, dict[str, pd.DataFrame]]:
     """Compact heatmap of signed change; negative values are degradation.
 
@@ -7508,7 +7494,7 @@ def plot_assumption_degradation_heatmap(
     notebook cells but is intentionally ignored: cell annotations always show
     only the numeric difference.
     """
-    output = build_assumption_degradation_data(
+    output = prepared_data.copy() if prepared_data is not None else build_assumption_degradation_data(
         data,
         metric=metric,
         assumptions=assumptions,
@@ -7564,7 +7550,7 @@ def plot_assumption_degradation_heatmap(
     ax.set_ylabel(ylabel, fontsize=font_size)
     _despine(ax, font_size=font_size)
     fig.tight_layout()
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (fig, ax, output)
 
 
@@ -7769,7 +7755,6 @@ def plot_mechanism_change_bars(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -7949,7 +7934,7 @@ def plot_mechanism_change_bars(
     if show_title and title:
         fig.suptitle(title, fontsize=title_size + 1, y=1.035)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         axes_array,
@@ -7982,7 +7967,6 @@ def plot_noise_change_bars(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -8210,22 +8194,22 @@ def plot_noise_change_bars(
         fontsize=max(8, font_size - 2),
     )
     fig.tight_layout(rect=(0, 0, 1, 0.9))
-    _save(fig, save_path, dpi, transparent)
-    legacy_table: pd.DataFrame | None = None
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
+    display_table: pd.DataFrame | None = None
     if panel_specs is None:
         source_table = extract_table(noise_output)
         baseline_column = resolve_column(source_table, baseline)
         comparison_columns = [resolve_column(source_table, name) for name in comparison_names]
-        legacy_table = source_table[[baseline_column, *comparison_columns]].copy()
-        legacy_table.columns = ["baseline", *comparison_names]
-        legacy_table.index = legacy_table.index.astype(str)
+        display_table = source_table[[baseline_column, *comparison_columns]].copy()
+        display_table.columns = ["baseline", *comparison_names]
+        display_table.index = display_table.index.astype(str)
     return (
         fig,
         axes_array,
         {
             "values": pd.DataFrame(long_rows),
             "model_order": pd.DataFrame({"model": order}),
-            "table": legacy_table,
+            "table": display_table,
             "tables": {str(panel["title"]): panel["table"] for panel in panels},
         },
     )
@@ -8252,7 +8236,6 @@ def plot_noise_change_by_mechanism(
     axes: Sequence[plt.Axes] | None = None,
     font_size: float = DEFAULT_FONT_SIZE,
     title_size: float = DEFAULT_TITLE_SIZE,
-    save_path: str | Path | None = None,
     dpi: int = 300,
     transparent: bool = False,
 ) -> tuple[plt.Figure, np.ndarray, dict[str, Any]]:
@@ -8480,7 +8463,7 @@ def plot_noise_change_by_mechanism(
         fontsize=max(8, font_size - 2),
     )
     fig.tight_layout(rect=(0, 0, 1, 0.92))
-    _save(fig, save_path, dpi, transparent)
+    _apply_visual_alpha(fig, _PLOT_ALPHA.get())
     return (
         fig,
         axes_array,
