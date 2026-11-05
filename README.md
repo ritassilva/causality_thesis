@@ -62,7 +62,7 @@ requirements-*.txt         Python dependency specifications
 
 Synthetic files are stored once per condition and dataset seed. They contain `X`, `X_raw`, `true_adj`, `latent_nodes` and `observed_conf_nodes` where available. Search, validation and evaluation samples share this folder; the configurations determine which seeds each stage uses. Dataset seeds identify data instances, while model seeds identify algorithm runs on those instances.
 
-The final comparative measurements are in `results/final/benchmark.csv`, `results/final/biological_benchmark.csv` and `results/final/evaluation.csv`. The evaluation contains 5,940 completed fits across six families and 15 dataset seeds. Per-condition CSVs under `results/benchmark/` and `results/tuned/` contain the corresponding measurements. Dataset-instance averages are the comparison units used in the reported paired analyses.
+The final comparative measurements are in `results/final/benchmark.csv`, `results/final/biological_benchmark.csv` and `results/final/evaluation.csv`. 
 
 The shared per-fit result fields are:
 
