@@ -31,18 +31,13 @@ def main():
     study = {"benchmark": "benchmark", "tuned": "evaluation", "control": "benchmark_control"}[args.study]
     import pandas as pd
     if study == "evaluation":
-        frame = pd.read_csv(ROOT / "results/final/evaluation.csv", low_memory=False, float_precision="round_trip")
+        frame = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((ROOT / "results/tuned").glob("*.csv"))], ignore_index=True)
     elif study == "benchmark_control":
         frame = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((ROOT / "results/benchmark/control").glob("*.csv"))], ignore_index=True)
     else:
-        benchmark = pd.read_csv(ROOT / "results/final/benchmark.csv")
-        biological = pd.read_csv(ROOT / "results/final/biological_benchmark.csv")
-        other_sizes = pd.concat(
-            [pd.read_csv(path) for path in sorted((ROOT / "results/benchmark").glob("*.csv"))],
-            ignore_index=True,
-        )
         frame = pd.concat(
-            [benchmark, biological, other_sizes.loc[other_sizes.n_nodes.ne(20)]],
+            [pd.read_csv(path, low_memory=False, float_precision="round_trip")
+             for path in sorted((ROOT / "results/benchmark").glob("*.csv"))],
             ignore_index=True,
         )
     frame["model"] = frame.model.replace({"DAGMA_Reg": "PRISM", "DAGMA_Prior": "PRISM"})
@@ -50,6 +45,16 @@ def main():
     frame["n_nodes"] = frame.n_nodes.fillna(pd.to_numeric(frame.dataset.str.extract(r"^(\d+)nodes", expand=False)))
     if args.nodes is not None:
         frame = frame.loc[frame.n_nodes.eq(args.nodes)]
+    # Every method uses the complete study seed range, including deterministic
+    # methods. Stored CSV rows select configurations, not the repetition count.
+    protocol = json.loads((ROOT / "configs/experiment_protocol.json").read_text())
+    model_seeds = protocol["model_seeds"][study]
+    if args.model_seed and not set(args.model_seed).issubset(model_seeds):
+        parser.error(f"--model-seed must belong to {model_seeds}")
+    identities = ["dataset", "model", "arm", "dataset_seed"]
+    frame = frame[identities].drop_duplicates().merge(
+        pd.DataFrame({"model_seed": model_seeds}), how="cross"
+    )
     rows = frame.to_dict(orient="records")
     tasks = []
     for row in rows:

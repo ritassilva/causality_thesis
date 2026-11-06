@@ -45,14 +45,17 @@ datasets/
 ├── sachs/                 Observations and reference graph
 └── tcga/                  Cohorts, subtypes and biological references
 results/
-├── final/                 Final comparative benchmark and evaluation CSVs
 ├── analysis/              Prepared numerical notebook tables and arrays
 ├── benchmark/             Per-condition benchmark measurements and control
 ├── tuned/                 Per-condition tuned/untuned measurements
 ├── prism/                 Selection, priors, ablation and convergence results
 ├── scalability/           Dedicated scalability measurements
 ├── sachs/                 Sachs model measurements
-└── tcga/                  TCGA model outputs and numerical summaries
+└── tcga/
+    ├── metrics/           Per-dataset execution records
+    ├── edges/             Full-cohort and subtype edge tables
+    ├── fits/              PRISM matrices and graphs by cohort
+    └── priors/            Prior matrices and settings
 notebooks/                 Presentation of the reported analyses
 analysis/                  Numerical calculations and visualization functions
 runs/                      Model fitting, numerical preparation and data processing
@@ -62,15 +65,15 @@ requirements-*.txt         Python dependency specifications
 
 Synthetic files are stored once per condition and dataset seed. They contain `X`, `X_raw`, `true_adj`, `latent_nodes` and `observed_conf_nodes` where available. Search, validation and evaluation samples share this folder; the configurations determine which seeds each stage uses. Dataset seeds identify data instances, while model seeds identify algorithm runs on those instances.
 
-The final comparative measurements are in `results/final/benchmark.csv`, `results/final/biological_benchmark.csv` and `results/final/evaluation.csv`. 
+The comparative measurements and their metadata are stored once per condition in `results/benchmark/` and `results/tuned/`.
 
-The shared per-fit result fields are:
+The shared per-fit result fields are listed below. `dataset_seed` applies only to synthetic datasets and is omitted from Sachs and TCGA results; `model_seed` identifies algorithm runs on each fixed observational dataset.
 
 ```text
 dataset,model,arm,dataset_seed,model_seed,condition_id,status,timed_out,n_nodes,n_samples,f1,fbeta,precision,recall,SHD,runtime_seconds
 ```
 
-The three aggregate source CSVs also retain measurement metadata. `arm` distinguishes tuned and untuned configurations; `condition_id` identifies an analysis condition or stage. `fbeta` denotes F0.5. Prior AUPRC evaluations are stored in the prepared prior-analysis tables.
+`arm` distinguishes tuned and untuned configurations; `condition_id` identifies an analysis condition or stage. `fbeta` denotes F0.5. Prior AUPRC evaluations are stored in the prepared prior-analysis tables.
 
 ## Numerical preparation and figures
 
@@ -104,6 +107,8 @@ The workbook is a static export of `results/analysis/statistics.pkl`, containing
 | Search, validation, held-out evaluation and ablation | 0–4 |
 | Dedicated scalability study | 0–2 |
 
-`runs/prepare_tcga/` contains the cohort-processing code, and `configs/tcga_sources.json` records the data sources. Prepared cohorts and references are included under `datasets/tcga/`. 
+`runs/prepare_tcga/` contains the cohort-processing code, and `configs/tcga_sources.json` records the data sources. Prepared cohorts and references are included under `datasets/tcga/`.
+
 
 Large NumPy files use Git LFS. After cloning, run `git lfs pull` if the arrays were not downloaded automatically.
+

@@ -50,7 +50,7 @@ from glioma_analysis import (
 
 
 def reference_edges() -> set[tuple[str, str]]:
-    path = PROJECT_ROOT / "datasets/tcga/references/phased_relations.csv"
+    path = PROJECT_ROOT / "datasets/tcga/references/phased_relations_glioma_rna_final.csv"
     reference = pd.read_csv(path)
 
     def variable(gene: str, kind: str) -> str:
@@ -117,5 +117,17 @@ def family_candidates(
 
 def short_name(variable: str) -> str:
     return variable.removesuffix("_expr_log2tpm").removesuffix("_mut")
+
+
+def is_novel_relationship(edge, known):
+    """Separate the eight recovery controls from the thesis novelty criterion.
+
+    PTEN/PIK3CA is an established protein-signalling pair, excluded from novel
+    candidates in the thesis; it is not one of the eight RNA recovery controls.
+    """
+    return (
+        edge not in known and edge[::-1] not in known
+        and frozenset(map(short_name, edge)) != frozenset(('PTEN', 'PIK3CA'))
+    )
 
 

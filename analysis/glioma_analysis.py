@@ -91,7 +91,7 @@ def resolve_models(models: Iterable[str] | None = None) -> tuple[str, ...]:
 
 
 def _analysis_dir(tcga_root: Path, dataset: str) -> Path:
-    return tcga_root / ("arms_analysis_subtypes" if "__" in dataset else "arms_analysis")
+    return tcga_root / "edges" / ("subtypes.csv" if "__" in dataset else "full_cohort.csv")
 
 
 def _load_labels() -> dict[str, list[str]]:
@@ -126,15 +126,15 @@ class GliomaBundle:
         return self.occurrences[dataset][MODEL_ALIASES.get(model.upper(), model)]
 
 
-def edge_occurrences(analysis: Path) -> pd.DataFrame:
+def edge_occurrences(edge_file: Path) -> pd.DataFrame:
     """Aggregate individual saved graph edges using the measured fit counts."""
 
 
-    metrics = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((find_project_root() / "results/tcga").glob("*.csv"))], ignore_index=True)
+    metrics = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((find_project_root() / "results/tcga/metrics").glob("*.csv"))], ignore_index=True)
     metrics["arm"] = metrics.model + "__" + metrics.arm
     knowledge = metrics.condition_id.astype(str).str.endswith("__background_knowledge")
     metrics.loc[knowledge, "arm"] += "__bk"
-    edges = pd.read_csv(analysis / "edges_by_run.csv")
+    edges = pd.read_csv(edge_file)
     pairs = np.sort(edges[["source", "target"]].to_numpy(str), axis=1)
     edges["left"], edges["right"] = pairs[:, 0], pairs[:, 1]
     keys = ["dataset", "arm", "view"]
@@ -177,13 +177,13 @@ def load_glioma_results(
     status_parts = []
     availability_rows = []
     for analysis_name, datasets in (
-        ("arms_analysis", BASE_DATASETS),
-        ("arms_analysis_subtypes", tuple((d for d in DATASETS if "__" in d))),
+        ("full_cohort.csv", BASE_DATASETS),
+        ("subtypes.csv", tuple((d for d in DATASETS if "__" in d))),
     ):
-        analysis = tcga_root / analysis_name
-        rates = edge_occurrences(analysis)
+        edge_file = tcga_root / "edges" / analysis_name
+        rates = edge_occurrences(edge_file)
 
-        metrics = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((find_project_root() / "results/tcga").glob("*.csv"))], ignore_index=True)
+        metrics = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((find_project_root() / "results/tcga/metrics").glob("*.csv"))], ignore_index=True)
         names = metrics["model"]
         metrics["arm"] = names + "__" + metrics["arm"]
         knowledge = metrics["condition_id"].astype(str).str.endswith("__background_knowledge")
@@ -1248,14 +1248,14 @@ def strict_reference_precision_summary(
     min_rate: float = 0.8,
     graphs: Mapping[str, pd.DataFrame] | None = None,
 ) -> pd.DataFrame:
-    """Exact directed-edge precision using only ``strict_relations.csv``.
+    """Exact directed-edge precision using only ``phased_relations_glioma_rna_final.csv``.
 
     Only a predicted arrow with the same source and target as a strict
     reference counts as confirmed. Mutation-only datasets are not evaluable,
     because the strict file contains no mutation--mutation relations.
     """
     arm = resolve_models((model,))[0]
-    path = bundle.project_root / "datasets/tcga/references/strict_relations.csv"
+    path = bundle.project_root / "datasets/tcga/references/phased_relations_glioma_rna_final.csv"
     strict = pd.read_csv(path)
     suffix = {"mut": MUTATION_SUFFIX, "expr": EXPRESSION_SUFFIX}
     all_reference_edges = {
@@ -1306,13 +1306,13 @@ def strict_reference_precision_summary(
 def strict_reference_recovery_summary(
     bundle: GliomaBundle, graphs: Mapping[str, pd.DataFrame]
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Exact directed recall against ``strict_relations.csv``.
+    """Exact directed recall against ``phased_relations_glioma_rna_final.csv``.
 
-    The strict reference has no phase labels.  A relation is applicable to a
+    Only the eight final thesis references are used.  A relation is applicable to a
     dataset only when both variables are present, and it is recovered only
     when the graph contains the arrow in the same direction.
     """
-    path = bundle.project_root / "datasets/tcga/references/strict_relations.csv"
+    path = bundle.project_root / "datasets/tcga/references/phased_relations_glioma_rna_final.csv"
     strict = pd.read_csv(path)
     suffix = {"mut": MUTATION_SUFFIX, "expr": EXPRESSION_SUFFIX}
     reference = [
@@ -1736,7 +1736,7 @@ def plot_strict_reference_precision(
     graphs: Mapping[str, pd.DataFrame] | None = None,
     analysis_label: str | None = None,
 ):
-    """Plot exact oriented matches against ``strict_relations.csv``."""
+    """Plot exact oriented matches against ``phased_relations_glioma_rna_final.csv``."""
     import matplotlib.pyplot as plt
 
     summary = strict_reference_precision_summary(
@@ -1777,7 +1777,7 @@ def plot_strict_reference_precision(
     ax.set_xlabel("Setas previstas exatamente confirmadas pelas referências estritas (%)")
     ax.set_ylabel("Dataset")
     label = analysis_label or resolve_models((model,))[0]
-    ax.set_title(f"{label} — precisão orientada (strict_relations.csv)")
+    ax.set_title(f"{label} — precisão orientada (phased_relations_glioma_rna_final.csv)")
     ax.grid(axis="x", alpha=0.2)
     return (fig, ax, summary)
 
@@ -2256,8 +2256,8 @@ def build_internal_threshold_graphs(
             Path(path)
             for path in matrix_roots
             or (
-                bundle.tcga_root / "arms_results",
-                bundle.tcga_root / "arms_results_subtypes",
+                bundle.tcga_root / "fits/full_cohort",
+                bundle.tcga_root / "fits/subtypes",
             )
         )
     )

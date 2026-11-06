@@ -20,7 +20,7 @@ from Wilcoxon_test.wilcoxon_test import build_wilcoxon_rank, paired_wilcoxon as 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runs"))
 from metrics import order_fnr
-BIOLOGICAL_RESULTS = ROOT / "results/final/biological_benchmark.csv"
+BIOLOGICAL_RESULTS = tuple(sorted((ROOT / "results/benchmark").glob("20nodes_Mod*.csv")))
 PRIORS = ROOT / "results/prism/priors"
 DATASET_SEEDS = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
 TEST_FAMILIES = (
@@ -48,6 +48,22 @@ MODEL_LABELS = {
     "PRISM": "PRISM",
     "GraNDAG": "GraN-DAG",
 }
+
+
+def load_benchmark_results() -> pd.DataFrame:
+    """Read the single per-condition source for the 20-variable benchmark."""
+    return pd.concat([
+        pd.read_csv(path, low_memory=False, float_precision="round_trip")
+        for path in sorted((ROOT / "results/benchmark").glob("20nodes_*.csv"))
+    ], ignore_index=True)
+
+
+def load_tuned_results() -> pd.DataFrame:
+    """Read the six per-condition tuned/untuned evaluation files."""
+    return pd.concat([
+        pd.read_csv(path, low_memory=False, float_precision="round_trip")
+        for path in sorted((ROOT / "results/tuned").glob("*.csv"))
+    ], ignore_index=True)
 
 
 def load_graph_size_results():
@@ -112,16 +128,19 @@ def visualization_data(frame: pd.DataFrame) -> fv.FinalVisualizationData:
 
 
 def load_final_results() -> dict[str, object]:
-    benchmark_all = prepare_metrics(pd.concat([pd.read_csv(ROOT / "results/final/benchmark.csv", low_memory=False, float_precision="round_trip"), pd.read_csv(ROOT / "results/final/biological_benchmark.csv", low_memory=False, float_precision="round_trip")], ignore_index=True))
+    benchmark_all = prepare_metrics(load_benchmark_results())
     benchmark_biological = benchmark_all.loc[
         benchmark_all.dataset.isin(TEST_FAMILIES[1:])
     ].copy()
     benchmark = benchmark_all.loc[
         ~benchmark_all.dataset.isin(TEST_FAMILIES[1:])
     ].copy()
-    complete = prepare_metrics(pd.read_csv(ROOT / "results/final/evaluation.csv", low_memory=False, float_precision="round_trip"))
-    if len(complete) != 5940 or not complete.finished.all():
-        raise ValueError("Final evaluation requires 5,940 completed fits")
+    complete = prepare_metrics(load_tuned_results())
+    if len(complete) != 13500 or not complete.finished.all():
+        raise ValueError("Final evaluation requires 13,500 completed model-seed records")
+    seed_groups = complete.groupby(["dataset", "model", "arm", "dataset_seed"])
+    if not seed_groups.model_seed.apply(lambda s: set(s) == set(range(5))).all():
+        raise ValueError("Every evaluation configuration requires model seeds 0–4")
     if set(complete.dataset_seed.astype(int)) != set(DATASET_SEEDS):
         raise ValueError("Final evaluation has unexpected dataset seeds")
     if complete.duplicated(["arm", "dataset", "dataset_seed", "model", "model_seed"]).any():
@@ -458,7 +477,7 @@ def raw_sortability() -> pd.DataFrame:
 
     family = "20nodes_ER_obsconf0_latconf0_Gaussian_Linear"
     rows = []
-    measurements = pd.concat([pd.read_csv(ROOT / "results/final/benchmark.csv", low_memory=False, float_precision="round_trip"), pd.read_csv(ROOT / "results/final/biological_benchmark.csv", low_memory=False, float_precision="round_trip")], ignore_index=True)
+    measurements = load_benchmark_results()
     seeds = sorted(measurements.loc[measurements.dataset.eq(family), "dataset_seed"].unique())
     for seed in seeds:
         with np.load(ROOT / "datasets/synthetic" / f"{family}__seed_{int(seed)}.npz", allow_pickle=False) as sample:

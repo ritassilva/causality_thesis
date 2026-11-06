@@ -1079,7 +1079,7 @@ def load_robustness_fits(
     """Load and validate the per-fit tuning/generalisation robustness table."""
     if path is None:
 
-        return add_fbeta(_canonicalize_model_names(pd.read_csv(_project_root(project_root) / "results/final/evaluation.csv", low_memory=False, float_precision="round_trip")))
+        return add_fbeta(_canonicalize_model_names(pd.concat([pd.read_csv(p, low_memory=False, float_precision="round_trip") for p in sorted((_project_root(project_root) / "results/tuned").glob("*.csv"))], ignore_index=True)))
     source = Path(path)
     if not source.exists():
         raise FileNotFoundError(f"Robustness fits table not found: {source}")

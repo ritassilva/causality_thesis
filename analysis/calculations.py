@@ -310,7 +310,7 @@ def calculate_tcga_biological():
         return value.replace('_expr_log2tpm', ' RNA').replace('_mut', ' mut.')
     labels = [f'{clean_variable(source)} → {clean_variable(target)}' for source, target in control_edges]
     thresholds = (0.1, 0.125, 0.15, 0.2)
-    matrix_roots = (ROOT / 'results/tcga/arms_results', ROOT / 'results/tcga/arms_results_subtypes')
+    matrix_roots = (ROOT / 'results/tcga/fits/full_cohort', ROOT / 'results/tcga/fits/subtypes')
     threshold_graphs, _ = build_internal_threshold_graphs(glioma, thresholds=thresholds, consensus_rate=0.8, model='PRISM', matrix_roots=matrix_roots)
     _, reference_detail = internal_threshold_sensitivity_summary(glioma, threshold_graphs, phase=1)
 
@@ -325,13 +325,13 @@ def calculate_tcga_biological():
     threshold_edges = pd.DataFrame(rows)
     reference_summary = reference_detail[reference_detail.dataset.isin(('tcga_expr35', 'tcga_mut_expr70'))].groupby(['internal_threshold', 'dataset'], as_index=False).agg(applicable=('status', 'size'), recovered=('status', lambda x: x.eq('direta_sentido_certo').sum()))
     reference_summary['recall'] = 100 * reference_summary.recovered / reference_summary.applicable
-    from select_tcga_high_confidence_edges import EXPRESSION_FAMILY, JOINT_FAMILY, family_candidates, reference_edges, short_name
+    from select_tcga_high_confidence_edges import EXPRESSION_FAMILY, JOINT_FAMILY, family_candidates, reference_edges, short_name, is_novel_relationship
     expression_candidates = family_candidates(tcga_graphs, EXPRESSION_FAMILY, 'expr->expr')
     joint_candidates = family_candidates(tcga_graphs, JOINT_FAMILY, 'expr->expr')
     known = reference_edges()
     candidate_rows = []
     for edge in sorted(set(expression_candidates) & set(joint_candidates)):
-        if edge in known or (edge[1], edge[0]) in known:
+        if not is_novel_relationship(edge, known):
             continue
         supporting = sorted(set(expression_candidates[edge]['supporting_methods']) | set(joint_candidates[edge]['supporting_methods']))
         candidate_rows.append({'Candidate relationship': f'{short_name(edge[0])} -> {short_name(edge[1])}', 'Expr.': f"{expression_candidates[edge]['n_contexts']}/4", 'Joint': f"{joint_candidates[edge]['n_contexts']}/4", 'Min. seed support': min(expression_candidates[edge]['minimum_seed_rate'], joint_candidates[edge]['minimum_seed_rate']), 'Supporting methods': ', '.join((th.model_label(model) for model in supporting))})
@@ -340,8 +340,8 @@ def calculate_tcga_biological():
     joint = edge_set(threshold_graphs[0.1]['tcga_mut_expr70'])
     joint_expression = {(s, t) for s, t in joint if not s.endswith('_mut') and (not t.endswith('_mut'))}
     overlap = pd.DataFrame([dict(expression_edges=len(expression), joint_total_edges=len(joint), joint_expression_edges=len(joint_expression), shared_direction=len(expression & joint_expression), expression_only=len(expression - joint_expression), joint_only=len(joint_expression - expression), net_expression_edges=len(joint_expression) - len(expression))])
-    selected = (set(expression_candidates) & set(joint_candidates)) - known
-    selected = {edge for edge in selected if (edge[1], edge[0]) not in known}
+    selected = {edge for edge in set(expression_candidates) & set(joint_candidates)
+                if is_novel_relationship(edge, known)}
     strict_graphs, _ = build_internal_threshold_graphs(glioma, thresholds=(0.1,), consensus_rate=1.0, model='PRISM', matrix_roots=matrix_roots)
     _, strict_detail = internal_threshold_sensitivity_summary(glioma, strict_graphs, phase=1)
     rows = []
@@ -391,7 +391,7 @@ def calculate_tcga_agreement():
                 union = ref | edges
                 cohort.append(dict(dataset=dataset, model=m, cohort_edges=len(ref), subtype_edges=len(edges), common_edges=len(ref & edges), jaccard=len(ref & edges) / len(union) if union else np.nan))
     reproducibility = pd.DataFrame(cohort)
-    threshold_graphs, _ = ga.build_internal_threshold_graphs(bundle, thresholds=(0.1, 0.125, 0.15, 0.2), consensus_rate=0.8, model='PRISM', matrix_roots=(ROOT / 'results/tcga/arms_results', ROOT / 'results/tcga/arms_results_subtypes'))
+    threshold_graphs, _ = ga.build_internal_threshold_graphs(bundle, thresholds=(0.1, 0.125, 0.15, 0.2), consensus_rate=0.8, model='PRISM', matrix_roots=(ROOT / 'results/tcga/fits/full_cohort', ROOT / 'results/tcga/fits/subtypes'))
     summary, detail = ga.internal_threshold_sensitivity_summary(bundle, threshold_graphs, phase=1)
     threshold_counts = pd.DataFrame([dict(threshold=t, dataset=d, n_edges=len(g)) for t, context in threshold_graphs.items() for d, g in context.items()])
     return {'reproducibility': reproducibility, 'summary': summary, 'detail': detail, 'threshold_counts': threshold_counts}

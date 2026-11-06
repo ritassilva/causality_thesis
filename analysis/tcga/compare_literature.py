@@ -34,14 +34,13 @@ from tcga_config import (
     gene_of,
 )
 
-ARMS_ANALYSIS = STUDY_ROOT / "arms_analysis"
+ARMS_ANALYSIS = STUDY_ROOT / "edges"
 REFERENCES = Path(__file__).resolve().parents[2] / "datasets/tcga/references"
 RESULTS = Path(__file__).resolve().parents[2] / "results/tcga/literature_comparison"
-LITERATURE_FILE = REFERENCES / "literature_mutation_pairs.csv"
+THESIS_FILE = REFERENCES / "phased_relations_glioma_rna_final.csv"
 STRING_FILE = REFERENCES / "string_network.tsv"
 STRING_IDS_FILE = REFERENCES / "string_ids.tsv"
 OMNIPATH_FILE = REFERENCES / "omnipath_interactions.tsv"
-SIGNOR_SITE_FILE = REFERENCES / "signor_site.csv"
 
 FINAL_MODEL = "PRISM__tuned"
 
@@ -77,7 +76,7 @@ PLAN = {
         ("string_expdb", "expr-expr"),
         ("string_combined", "expr-expr"),
         ("omnipath_directed", "expr-expr"),
-        ("signor", "expr-expr"),
+        ("thesis_expression", "expr-expr"),
         ("collectri", "expr-expr"),
     ],
     "tcga_mut_expr70": [
@@ -87,7 +86,7 @@ PLAN = {
         ("string_expdb", "expr-expr"),
         ("string_combined", "expr-expr"),
         ("omnipath_directed", "expr-expr"),
-        ("signor", "expr-expr"),
+        ("thesis_expression", "expr-expr"),
         ("collectri", "expr-expr"),
     ],
 }
@@ -138,38 +137,22 @@ def block_universe(labels: list[str], block: str) -> list[frozenset]:
 
 
 def cis_reference(genes: list[str]) -> dict[frozenset, dict]:
+    table = pd.read_csv(THESIS_FILE)
     return {
-        pair(mut_label(g), expr_label(g)): {
-            "gene_a": g,
-            "gene_b": g,
-            "relation": "cis",
-            "sources": "Lindeboom et al. 2016 Nat Genet (NMD); amplificação para EGFR/PDGFRA",
+        pair(mut_label(r.source_gene), expr_label(r.target_gene)): {
+            "gene_a": r.source_gene, "gene_b": r.target_gene,
+            "relation": "cis", "sources": r.citation,
         }
-        for g in genes
+        for r in table.itertuples(index=False)
+        if r.group == "cis" and r.source_gene in genes and r.target_gene in genes
     }
 
 
 def literature_reference(
     genes: set[str], independent_only: bool, label_of
 ) -> dict[frozenset, dict]:
-    table = pd.read_csv(LITERATURE_FILE)
-    unknown = (set(table.gene_a) | set(table.gene_b)) - genes
-    if unknown:
-        raise ValueError(f"{LITERATURE_FILE.name} tem genes fora do painel: {sorted(unknown)}")
-    if independent_only:
-        table = table[table.independent_of_tcga.str.strip().str.lower() == "yes"]
-    reference = {}
-    for row in table.itertuples(index=False):
-        key = pair(label_of(row.gene_a), label_of(row.gene_b))
-        if key in reference:
-            raise ValueError(f"Par repetido em {LITERATURE_FILE.name}: {row.gene_a}-{row.gene_b}")
-        reference[key] = {
-            "gene_a": row.gene_a,
-            "gene_b": row.gene_b,
-            "relation": row.relation,
-            "sources": row.sources,
-        }
-    return reference
+    """The eight retained thesis references contain no mutation-pair controls."""
+    return {}
 
 
 def _string_post(endpoint: str, **params) -> pd.DataFrame:
@@ -271,7 +254,7 @@ def omnipath_reference(subset: str) -> dict[frozenset, dict]:
     network = network[
         _true(network.is_directed) & (network.source_genesymbol != network.target_genesymbol)
     ]
-    if subset == "signor":
+    if subset == "thesis_expression":
         network = network[
             network.sources.fillna("").str.split(";").apply(lambda resources: "SIGNOR" in resources)
         ]
@@ -286,20 +269,15 @@ def omnipath_reference(subset: str) -> dict[frozenset, dict]:
     return directed_reference(triples, f"OmniPath ({subset})")
 
 
-def signor_site_reference() -> dict[frozenset, dict]:
-    """Interacções do SIGNOR copiadas do site para ``signor_site.csv``."""
-    table = pd.read_csv(SIGNOR_SITE_FILE)
-    sign = {"up-regulates": "+", "down-regulates": "-"}
+def thesis_expression_reference() -> dict[frozenset, dict]:
+    """Expression relationships from the eight final thesis references."""
+    table = pd.read_csv(THESIS_FILE)
     triples = [
-        (
-            row.source,
-            row.target,
-            sign.get(row.effect, "") + ("" if row.line_in_figure == "solid" else " (tracejado)"),
-        )
-        for row in table.itertuples(index=False)
-        if row.source != row.target
+        (r.source_gene, r.target_gene, r.effect)
+        for r in table.itertuples(index=False)
+        if r.source_kind == "expr" and r.target_kind == "expr"
     ]
-    return directed_reference(triples, "SIGNOR (site)")
+    return directed_reference(triples, "Thesis references")
 
 
 def directed_reference(triples, label: str) -> dict[frozenset, dict]:
@@ -336,34 +314,47 @@ def load_arm_skeletons(
 ) -> tuple[dict[tuple[str, str], set], dict[tuple[str, str], set]]:
     """(dataset, braço) -> esqueleto do consenso, e as arestas orientadas.
 
-    Os braços vêm de ``within_arm_consensus.csv`` e não da tabela de arestas,
-    para que um braço com consenso vazio apareça com zero arestas em vez de
-    desaparecer. O segundo dicionário guarda (origem, destino) das arestas
-    com orientação ``directed``; as ``unoriented`` só estão no esqueleto.
+    Execution records identify every arm, including empty graphs. Consensus is
+    calculated in memory from the current per-run edge tables, with the same
+    measured run counts used by the notebook analyses. Skeleton support counts
+    each unordered pair once per model seed; arrows require support for the
+    exact direction. No intermediate consensus CSVs are required or written.
     """
-    summary = pd.read_csv(ARMS_ANALYSIS / "within_arm_consensus.csv")
-    edges = pd.read_csv(ARMS_ANALYSIS / "within_arm_consensus_edges.csv")
+    if not 0 < within <= 1:
+        raise ValueError("within must be greater than 0 and at most 1")
+    if str(HERE.parent) not in sys.path:
+        sys.path.insert(0, str(HERE.parent))
+    from glioma_analysis import edge_occurrences
+
     skeletons, oriented = {}, {}
+    occurrences = {}
     for dataset, view in views.items():
-        rows = summary[
-            (summary.dataset == dataset)
-            & (summary.view == view)
-            & np.isclose(summary.within_threshold, within)
-        ]
-        if rows.empty:
-            raise ValueError(f"Sem consenso para {dataset}/{view} com within={within}")
-        chosen = edges[
-            (edges.dataset == dataset)
-            & (edges.view == view)
-            & np.isclose(edges.within_threshold, within)
-        ]
-        for arm in rows.arm:
+        base = dataset.split("__", 1)[0]
+        valid_views = {"raw", "oriented", "pruned"} if base == "tcga_mut_expr70" else {"raw"}
+        if view not in valid_views:
+            raise ValueError(f"Invalid view {view!r} for {dataset}")
+        metrics = pd.read_csv(STUDY_ROOT / "metrics" / f"{dataset}.csv")
+        metrics = metrics.loc[metrics.dataset.eq(dataset)].copy()
+        if metrics.empty:
+            raise ValueError(f"No execution records for {dataset}")
+        metrics["arm"] = metrics.model + "__" + metrics.arm
+        background = metrics.condition_id.astype(str).str.endswith("__background_knowledge")
+        metrics.loc[background, "arm"] += "__bk"
+        for arm in metrics.arm.unique():
             skeletons[(dataset, arm)] = set()
             oriented[(dataset, arm)] = set()
+
+        edge_file = ARMS_ANALYSIS / ("subtypes.csv" if "__" in dataset else "full_cohort.csv")
+        if edge_file not in occurrences:
+            occurrences[edge_file] = edge_occurrences(edge_file)
+        rates = occurrences[edge_file]
+        chosen = rates.loc[rates.dataset.eq(dataset) & rates.view.eq(view)]
         for row in chosen.itertuples(index=False):
-            skeletons.setdefault((dataset, row.arm), set()).add(pair(row.source, row.target))
-            if row.orientation == "directed":
-                oriented.setdefault((dataset, row.arm), set()).add((row.source, row.target))
+            key = (dataset, row.arm)
+            if row.skeleton_rate >= within:
+                skeletons[key].add(pair(row.source, row.target))
+            if row.directed_rate >= within:
+                oriented[key].add((row.source, row.target))
     return skeletons, oriented
 
 
@@ -539,10 +530,10 @@ def compare(args) -> None:
         "string_expdb": string_reference(args.string_threshold, "expdb"),
         "string_combined": string_reference(args.string_threshold, "combined"),
         "omnipath_directed": omnipath_reference("all"),
-        "signor": signor_site_reference(),
+        "thesis_expression": thesis_expression_reference(),
         "collectri": omnipath_reference("collectri"),
     }
-    directional = {"omnipath_directed", "signor", "collectri"}
+    directional = {"omnipath_directed", "thesis_expression", "collectri"}
 
     views = {d: (args.view_70 if d == "tcga_mut_expr70" else DEFAULT_VIEW[d]) for d in PLAN}
     skeletons, oriented = load_arm_skeletons(args.within, views)

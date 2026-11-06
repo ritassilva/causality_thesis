@@ -165,5 +165,5 @@
     249
   ],
   "model": "PRISM",
-  "results": "Final selected-model results are stored in results/prism/tuning/ and results/final/evaluation.csv."
+  "results": "Final selected-model results are stored in results/prism/tuning/ and results/tuned/."
 }

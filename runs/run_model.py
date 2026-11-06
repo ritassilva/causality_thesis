@@ -214,7 +214,7 @@ def main():
                 sample=str(input_path),
                 study=args.study,
                 condition=args.condition,
-                dataset_seed=args.dataset_seed,
+                **({"dataset_seed": args.dataset_seed} if args.study not in {"sachs", "tcga"} else {}),
                 n_nodes=int(X.shape[1]),
                 n_samples=int(X.shape[0]),
                 config=config,

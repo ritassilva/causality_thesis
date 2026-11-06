@@ -1,6 +1,6 @@
 """Evaluate inferred TCGA relationships against the strict reference table.
 
-References are read from datasets/tcga/references/strict_relations.csv. Scores
+References are read from datasets/tcga/references/phased_relations_glioma_rna_final.csv. Scores
 distinguish direct, indirect, reversed and unrecovered relationships at the
 measurement level represented by each dataset. These selected references do
 not constitute a complete causal ground truth.
@@ -29,10 +29,10 @@ from compare_literature import (
     pair,
 )
 
-STRICT_FILE = REFERENCES / "strict_relations.csv"
+STRICT_FILE = REFERENCES / "phased_relations_glioma_rna_final.csv"
 OUT = RESULTS / "model_scores"
 DATASETS = ("tcga_mut35", "tcga_expr35", "tcga_mut_expr70")
-GROUPS = ("signor", "cis")
+GROUPS = ("cis", "mut_expr", "transcricao")
 STATUSES = (
     "direta_sentido_certo",
     "direta_outro_sentido_na_referencia",
