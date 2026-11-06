@@ -115,8 +115,8 @@ OKABE_ITO_DIVERGING = LinearSegmentedColormap.from_list(
     "okabe_ito_diverging", (OKABE_ITO["vermillion"], "#F7F7F7", OKABE_ITO["blue"])
 )
 DEFAULT_SCALABILITY_FAMILIES: dict[str, str] = {
-    "eb_gaussian_linear": "Gaussian Linear",
-    "eb_nongaussian_mixed": "Non Gaussian Mixed",
+    "er_gaussian_linear": "Gaussian Linear",
+    "er_nongaussian_mixed": "Non Gaussian Mixed",
 }
 GRAPH_TYPE_DISPLAY_LABELS: dict[str, str] = {
     "ModMultiOmics": "MultiOmics",
@@ -124,12 +124,12 @@ GRAPH_TYPE_DISPLAY_LABELS: dict[str, str] = {
 }
 COMMON_ROBUSTNESS_DATASET_SEEDS: tuple[int, ...] = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
 DEFAULT_ROBUSTNESS_FAMILIES: tuple[str, ...] = (
-    "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed",
+    "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
     "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed",
-    "20nodes_EB_obsconf0_latconf0_Gaussian_Linear",
-    "20nodes_EB_obsconf0_latconf0_Gaussian_Mixed",
-    "20nodes_EB_obsconf0_latconf0_NonGaussian_Linear",
+    "20nodes_ER_obsconf0_latconf0_Gaussian_Linear",
+    "20nodes_ER_obsconf0_latconf0_Gaussian_Mixed",
+    "20nodes_ER_obsconf0_latconf0_NonGaussian_Linear",
 )
 DEFAULT_ROBUSTNESS_MODELS: tuple[str, ...] = (*DEFAULT_MODEL_ORDER, "PRISM")
 MODEL_NAME_ALIASES: dict[str, str] = {"DAGMA_Reg": "PRISM", "DAGMA_Prior": "PRISM"}
@@ -237,7 +237,7 @@ DEFAULT_ASSUMPTIONS = pd.DataFrame(
         },
         {
             "model": "AVICI",
-            "graph_type": "EB",
+            "graph_type": "ER",
             "confounding": "NoConf",
             "rationale": "In-distribution random graphs without confounding.",
         },
@@ -4123,7 +4123,7 @@ def plot_noise_heatmap(
     mechanisms: Any = ("Linear",),
     datasets: Any = None,
     n_nodes: Any = None,
-    graph_type: Any = "EB",
+    graph_type: Any = "ER",
     obs_conf: Any = 0,
     lat_conf: Any = 0,
     models: Any = None,
@@ -4213,7 +4213,7 @@ def plot_mechanism_heatmap(
     ),
     datasets: Any = None,
     n_nodes: Any = None,
-    graph_type: Any = "EB",
+    graph_type: Any = "ER",
     obs_conf: Any = 0,
     lat_conf: Any = 0,
     models: Any = None,
@@ -4324,13 +4324,13 @@ def _assign_scalability_family(df: pd.DataFrame) -> pd.DataFrame:
     dataset = out["dataset"].astype(str)
     missing = out["scalability_family"].isna()
     out.loc[
-        missing & dataset.str.contains("_EB_obsconf0_latconf0_Gaussian_Linear", regex=False),
+        missing & dataset.str.contains("_ER_obsconf0_latconf0_Gaussian_Linear", regex=False),
         "scalability_family",
-    ] = "eb_gaussian_linear"
+    ] = "er_gaussian_linear"
     out.loc[
-        missing & dataset.str.contains("_EB_obsconf0_latconf0_Non_Gaussian_Mixed", regex=False),
+        missing & dataset.str.contains("_ER_obsconf0_latconf0_Non_Gaussian_Mixed", regex=False),
         "scalability_family",
-    ] = "eb_nongaussian_mixed"
+    ] = "er_nongaussian_mixed"
     return out
 
 
@@ -5961,7 +5961,7 @@ def plot_confounding_f1(
     metric: str = "f1",
     noise: Any = "Gaussian",
     mechanism: Any = "Linear",
-    graph_type: Any = "EB",
+    graph_type: Any = "ER",
     datasets: Any = None,
     n_nodes: Any = None,
     obs_conf: Any = None,
@@ -6173,7 +6173,7 @@ def plot_confounding_false_positive_rates(
     *,
     noise: Any = "Gaussian",
     mechanism: Any = "Linear",
-    graph_type: Any = "EB",
+    graph_type: Any = "ER",
     datasets: Any = None,
     n_nodes: Any = None,
     obs_conf: Any = None,

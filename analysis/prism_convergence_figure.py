@@ -17,12 +17,12 @@ from final_visualization import DEFAULT_FONT_SIZE, OKABE_ITO, apply_style
 
 CONVERGENCE_FITS = ROOT / "results/prism/convergence/fits"
 FAMILY_LABELS = {
-    "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed": "ER, non Gaussian mixed",
+    "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed": "ER, non Gaussian mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed": "MultiOmics",
     "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed": "Oncogene",
 }
 FAMILY_COLORS = {
-    "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed": OKABE_ITO["blue"],
+    "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed": OKABE_ITO["blue"],
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed": OKABE_ITO["orange"],
     "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed": OKABE_ITO["bluish_green"],
 }

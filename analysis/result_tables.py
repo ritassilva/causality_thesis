@@ -24,14 +24,14 @@ BIOLOGICAL_RESULTS = ROOT / "results/final/biological_benchmark.csv"
 PRIORS = ROOT / "results/prism/priors"
 DATASET_SEEDS = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
 TEST_FAMILIES = (
-    "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed",
+    "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
     "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed",
 )
 OOD_FAMILIES = (
-    "20nodes_EB_obsconf0_latconf0_Gaussian_Linear",
-    "20nodes_EB_obsconf0_latconf0_Gaussian_Mixed",
-    "20nodes_EB_obsconf0_latconf0_NonGaussian_Linear",
+    "20nodes_ER_obsconf0_latconf0_Gaussian_Linear",
+    "20nodes_ER_obsconf0_latconf0_Gaussian_Mixed",
+    "20nodes_ER_obsconf0_latconf0_NonGaussian_Linear",
 )
 SIX_FAMILIES = (*OOD_FAMILIES, *TEST_FAMILIES)
 FAMILY_LABELS = {
@@ -456,7 +456,7 @@ def raw_sortability() -> pd.DataFrame:
     """Calculate sortability on the benchmark's 2000-row Gaussian-linear samples."""
     from varsortability import calculate_varsortability
 
-    family = "20nodes_EB_obsconf0_latconf0_Gaussian_Linear"
+    family = "20nodes_ER_obsconf0_latconf0_Gaussian_Linear"
     rows = []
     measurements = pd.concat([pd.read_csv(ROOT / "results/final/benchmark.csv", low_memory=False, float_precision="round_trip"), pd.read_csv(ROOT / "results/final/biological_benchmark.csv", low_memory=False, float_precision="round_trip")], ignore_index=True)
     seeds = sorted(measurements.loc[measurements.dataset.eq(family), "dataset_seed"].unique())

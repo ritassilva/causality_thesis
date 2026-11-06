@@ -225,7 +225,7 @@ def calculate_control():
     """Summarize the Gaussian-linear control and comparative benchmark measurements."""
     control = pd.concat([pd.read_csv(path, low_memory=False, float_precision='round_trip') for path in sorted((ROOT / 'results/benchmark/control').glob('*.csv'))], ignore_index=True)
     reference = th.load_final_results()['benchmark_with_biological']
-    reference = reference.loc[reference.dataset.eq('20nodes_EB_obsconf0_latconf0_Gaussian_Linear')]
+    reference = reference.loc[reference.dataset.eq('20nodes_ER_obsconf0_latconf0_Gaussian_Linear')]
     control['setting'] = 'High variance Gaussian'
     reference['setting'] = 'Gaussian'
     runs = pd.concat([reference, control], ignore_index=True)
@@ -418,13 +418,13 @@ def calculate_scalability():
     scale_cells = scalability_finished.groupby(['scalability_family', 'n_nodes', 'dataset_seed', 'model'], observed=True)['f1'].mean().reset_index()
     scale_summary = scale_cells.groupby(['scalability_family', 'n_nodes', 'model'], observed=True)['f1'].agg(['mean', 'std', 'size']).reset_index()
     scale_summary['F1'] = scale_summary.apply(lambda row: f"{row['mean']:.3f} ± {row['std']:.3f}", axis=1)
-    scale_gaussian = scale_summary.loc[scale_summary.scalability_family.eq('eb_gaussian_linear')]
+    scale_gaussian = scale_summary.loc[scale_summary.scalability_family.eq('er_gaussian_linear')]
     scale_wide = scale_gaussian.pivot(index='model', columns='n_nodes', values='mean')
     scale_wide = scale_wide.reindex(index=['PC', 'FCI', 'GES', 'GRaSP', 'DirectLiNGAM', 'NOTEARS', 'GOLEM', 'DAGMA_Linear', 'SCORE', 'NoGAM', 'DAS', 'GraNDAG', 'DAGMA_Nonlinear', 'AVICI', 'Random'], columns=[10, 15, 20, 30, 70, 100, 150, 250, 500])
     scale_wide = scale_wide.map(lambda value: '--' if pd.isna(value) else f'{value:.2f}')
     scale_wide.index = [th.model_label(model) for model in scale_wide.index]
     scale_wide = scale_wide.reset_index(names='Model')
-    mixed = scale_summary.loc[scale_summary.scalability_family.eq('eb_nongaussian_mixed')]
+    mixed = scale_summary.loc[scale_summary.scalability_family.eq('er_nongaussian_mixed')]
     mixed_wide = mixed.pivot(index='model', columns='n_nodes', values='mean')
     mixed_wide = mixed_wide.reindex(index=[m for m in fv.DEFAULT_MODEL_ORDER if m != 'Random'], columns=[10, 15, 20, 30, 70, 100, 150, 250, 500])
     mixed_wide = mixed_wide.map(lambda v: '—' if pd.isna(v) else f'{v:.3f}')

@@ -8,7 +8,7 @@
   "families": [
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
     "20nodes_ModOncogene_obsconf0_latconf0_Gaussian_Mixed",
-    "20nodes_EB_obsconf0_latconf0_Non_Gaussian_Mixed"
+    "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed"
   ],
   "glasso": {
     "alpha_scale_fractions": [
