@@ -15,6 +15,7 @@ from typing import Iterable
 import final_visualization as fv
 import numpy as np
 import pandas as pd
+from synthetic_data import sample_path
 from Wilcoxon_test.wilcoxon_test import build_wilcoxon_rank, paired_wilcoxon as wilcoxon
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +23,7 @@ sys.path.insert(0, str(ROOT / "runs"))
 from metrics import order_fnr
 BIOLOGICAL_RESULTS = tuple(sorted((ROOT / "results/benchmark").glob("20nodes_Mod*.csv")))
 PRIORS = ROOT / "results/prism/priors"
-DATASET_SEEDS = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
+DATASET_SEEDS = (19, 47, 50, 52, 71, 75, 77, 102, 125, 158, 222, 237, 308, 402, 603)
 TEST_FAMILIES = (
     "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",
@@ -79,11 +80,9 @@ def model_label(value: object) -> str:
 def load_scalability_results() -> pd.DataFrame:
     """Load per-fit scalability measurements directly from their source CSVs."""
     graph_sizes = prepare_metrics(load_graph_size_results())
-    base = pd.concat(
-        [graph_sizes, load_final_results()['benchmark_with_biological']],
-        ignore_index=True, sort=False,
-    )
+    base = pd.concat([graph_sizes, load_final_results()['benchmark_with_biological']], ignore_index=True, sort=False)
     return fv.load_scalability_data(visualization_data(base), project_root=ROOT)
+
 
 
 
@@ -190,7 +189,7 @@ def prism_performance(complete: pd.DataFrame) -> pd.DataFrame:
         order_values = []
         for seed in DATASET_SEEDS:
             prior_path = PRIORS / f"{family}__seed_{seed}.npz"
-            with np.load(ROOT / "datasets/synthetic" / f"{family}__seed_{int(seed)}.npz", allow_pickle=False) as data:
+            with np.load(sample_path(family, seed), allow_pickle=False) as data:
                 B = np.asarray(data["true_adj"]) != 0
             with np.load(prior_path, allow_pickle=False) as prior:
                 order = np.asarray(prior["order"], dtype=int)
@@ -480,7 +479,7 @@ def raw_sortability() -> pd.DataFrame:
     measurements = load_benchmark_results()
     seeds = sorted(measurements.loc[measurements.dataset.eq(family), "dataset_seed"].unique())
     for seed in seeds:
-        with np.load(ROOT / "datasets/synthetic" / f"{family}__seed_{int(seed)}.npz", allow_pickle=False) as sample:
+        with np.load(sample_path(family, seed, study="benchmark"), allow_pickle=False) as sample:
             observations = sample["X_raw"]
             values = calculate_varsortability(observations, sample["true_adj"])
             rows.append(dict(dataset_seed=seed, dataset=family, **values))
@@ -492,4 +491,4 @@ def r2_sort_regress() -> pd.DataFrame:
     """Fit the sorting baseline to the same 2000-row benchmark instances."""
     from varsortability import calculate_r2_sort_regress_table
 
-    return calculate_r2_sort_regress_table(raw_sortability(), project_root=ROOT)
+    return calculate_r2_sort_regress_table(raw_sortability(), project_root=ROOT, study="benchmark")

@@ -16,6 +16,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analysis"))
+from synthetic_data import configure_samples, sample_path
 
 
 def write_json(path, value):
@@ -62,11 +63,11 @@ def fit_parameters(model, params, prism):
 
 
 def evaluate(model, params, stage, settings, prism, directory, *, ev_winner=None):
-    data_dir = ROOT / "datasets/synthetic"
     thresholds = settings["threshold_grid"]
     rows = []
     for family in settings["families"]:
         for seed in settings[f"{stage}_dataset_seeds"]:
+            source = sample_path(family, seed, study="model_selection" if stage in {"search", "validation"} else "evaluation")
             # The full stage seed range applies to every method, including
             # deterministic ones; no single-seed shortcut is used.
             for model_seed in settings[f"{stage}_model_seeds"]:
@@ -82,7 +83,7 @@ def evaluate(model, params, stage, settings, prism, directory, *, ev_winner=None
                     if not init_path.exists():
                         ev_config = init_folder / "params.json"
                         write_json(ev_config, {"params": dict(ev_winner["params"], equal_variances=True), "threshold": 0.0})
-                        command = [sys.executable, str(ROOT / "runs/run_model.py"), "--sample", str(data_dir / f"{family}__seed_{seed}.npz"), "--dataset-seed", str(seed), "--model", "GOLEM",
+                        command = [sys.executable, str(ROOT / "runs/run_model.py"), "--sample", str(source), "--study", "model_selection" if stage in {"search", "validation"} else "evaluation", "--condition", family, "--dataset-seed", str(seed), "--model", "GOLEM",
                                    "--model-seed", "0", "--arm", "tuned", "--params", str(ev_config),
                                    "--output", str(init_folder / "fit")]
                         completed = subprocess.run(command, capture_output=True, text=True, timeout=settings["timeout_seconds"])
@@ -102,7 +103,7 @@ def evaluate(model, params, stage, settings, prism, directory, *, ev_winner=None
                             number += 1
                             interrupted = folder.with_name(folder.name + f"_interrupted_{number}")
                         folder.rename(interrupted)
-                    command = [sys.executable, str(ROOT / "runs/run_model.py"), "--sample", str(data_dir / f"{family}__seed_{seed}.npz"), "--dataset-seed", str(seed), "--model", model,
+                    command = [sys.executable, str(ROOT / "runs/run_model.py"), "--sample", str(source), "--study", "model_selection" if stage in {"search", "validation"} else "evaluation", "--condition", family, "--dataset-seed", str(seed), "--model", model,
                                "--model-seed", str(model_seed), "--arm", "tuned", "--params", str(parameter_file),
                                "--priors", "recompute", "--output", str(folder), "--threshold-grid", *map(str, thresholds)]
                     try:
@@ -225,6 +226,7 @@ def run_study(model, variant, settings, prism, spec, *, ev_winner=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True, help="PRISM, a baseline identifier, or all")
+    parser.add_argument("--samples", type=Path, required=True, help="JSON sample-file manifest")
     parser.add_argument("--config", type=Path, default=ROOT / "configs/baseline_study.json")
     parser.add_argument("--prism-config", type=Path, default=ROOT / "configs/prism_study.json")
     parser.add_argument("--output", type=Path, required=True)
@@ -235,6 +237,7 @@ def main():
     parser.add_argument("--variant", choices=["ev", "nv", "both"], default="both")
     parser.add_argument("--skip-test", action="store_true")
     args = parser.parse_args()
+    configure_samples(args.samples)
     baseline = json.loads(args.config.read_text())
     prism = json.loads(args.prism_config.read_text())
     if args.family:
@@ -242,9 +245,7 @@ def main():
     for family in baseline["families"]:
         for stage in ["search", "validation", "test"]:
             for seed in baseline[f"{stage}_dataset_seeds"]:
-                data_dir = ROOT / "datasets/synthetic"
-                if not (data_dir / f"{family}__seed_{seed}.npz").is_file():
-                    raise FileNotFoundError(data_dir / f"{family}__seed_{seed}.npz")
+                sample_path(family, seed, study="model_selection" if stage in {"search", "validation"} else "evaluation")
     models = list(baseline["spaces"]) + ["PRISM"] if args.model == "all" else [args.model]
     if any(model not in baseline["spaces"] and model != "PRISM" for model in models):
         parser.error("Unknown model identifier")
@@ -259,7 +260,7 @@ def main():
                               search_model_seeds=baseline["search_model_seeds"], validation_model_seeds=baseline["validation_model_seeds"],
                               test_model_seeds=baseline["test_model_seeds"]), indent=2))
         return
-    configuration = dict(settings=baseline, prism=prism, specifications=specs, models=models, skip_test=args.skip_test, variant=args.variant)
+    configuration = dict(samples=json.loads(args.samples.read_text()), samples_manifest=str(args.samples.resolve()), settings=baseline, prism=prism, specifications=specs, models=models, skip_test=args.skip_test, variant=args.variant)
     digest = hashlib.sha256(json.dumps(configuration, sort_keys=True).encode()).hexdigest()
     if args.output.exists():
         if not args.resume:

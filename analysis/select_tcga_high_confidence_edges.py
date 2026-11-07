@@ -50,7 +50,7 @@ from glioma_analysis import (
 
 
 def reference_edges() -> set[tuple[str, str]]:
-    path = PROJECT_ROOT / "datasets/tcga/references/phased_relations_glioma_rna_final.csv"
+    path = PROJECT_ROOT / "references/tcga/phased_relations_glioma_rna_final.csv"
     reference = pd.read_csv(path)
 
     def variable(gene: str, kind: str) -> str:

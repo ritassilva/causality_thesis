@@ -1,6 +1,6 @@
 """Evaluate TCGA reference relationships at their recorded measurement level.
 
-The reference table is datasets/tcga/references/phased_relations_glioma_rna_final.csv.
+The reference table is references/tcga/phased_relations_glioma_rna_final.csv.
 Phase 1 contains mRNA-level relationships; phase 2 contains protein-level
 relationships considered separately. Inferred graph relationships are classified
 by directness, direction and recovery.

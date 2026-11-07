@@ -3,7 +3,7 @@
 The comparisons distinguish mutation, expression and cross-modality variable
 pairs. Statistical enrichment can be evaluated against uniform and degree-
 preserving nulls and against marginal-association and partial-correlation
-baselines. Curated reference files are under datasets/tcga/references/.
+baselines. Curated reference files are under references/tcga/.
 Optional STRING and OmniPath queries are used only by the explicit data-fetch
 command; opening the presentation notebooks does not access these services.
 """
@@ -35,7 +35,7 @@ from tcga_config import (
 )
 
 ARMS_ANALYSIS = STUDY_ROOT / "edges"
-REFERENCES = Path(__file__).resolve().parents[2] / "datasets/tcga/references"
+REFERENCES = Path(__file__).resolve().parents[2] / "references/tcga"
 RESULTS = Path(__file__).resolve().parents[2] / "results/tcga/literature_comparison"
 THESIS_FILE = REFERENCES / "phased_relations_glioma_rna_final.csv"
 STRING_FILE = REFERENCES / "string_network.tsv"

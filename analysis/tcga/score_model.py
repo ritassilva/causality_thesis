@@ -1,6 +1,6 @@
 """Evaluate inferred TCGA relationships against the strict reference table.
 
-References are read from datasets/tcga/references/phased_relations_glioma_rna_final.csv. Scores
+References are read from references/tcga/phased_relations_glioma_rna_final.csv. Scores
 distinguish direct, indirect, reversed and unrecovered relationships at the
 measurement level represented by each dataset. These selected references do
 not constitute a complete causal ground truth.

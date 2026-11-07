@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--sample", type=Path, required=True, help="TCGA NPZ input file")
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--model-seed", type=int, default=0)
     parser.add_argument("--output", type=Path, required=True)
@@ -25,7 +26,7 @@ def main():
 
     if args.output.exists():
         raise FileExistsError(args.output)
-    with np.load(ROOT / "datasets/tcga" / f"{args.dataset}.npz", allow_pickle=False) as data:
+    with np.load(args.sample, allow_pickle=False) as data:
         X = data["X"]
         labels = data["col_names"].astype(str)
         kinds = data["kinds"].astype(str)

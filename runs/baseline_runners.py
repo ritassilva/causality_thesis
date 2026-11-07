@@ -314,7 +314,9 @@ def _avici_cache_dir():
     from pathlib import Path
 
     configured = os.environ.get("AVICI_CACHE_DIR")
-    path = Path(configured) if configured else Path(__file__).resolve().parent.parent / "datasets/avici/pretrained"
+    if not configured:
+        raise ValueError("Set AVICI_CACHE_DIR to the location of the downloaded pretrained SCM weights")
+    path = Path(configured)
     if not (path / "models--larslorch--avici").is_dir():
         raise FileNotFoundError(
             f"AVICI weights not found under {path}; set AVICI_CACHE_DIR to the "

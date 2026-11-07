@@ -6,7 +6,7 @@ EXPRESSION_SUFFIX = "_expr_log2tpm"
 
 
 def default_source_file():
-    return ROOT / "datasets/tcga/preparation/cohort/06_causal_input_mutation_plus_log2_tpm.tsv"
+    raise ValueError("Supply the prepared cohort TSV using --data.")
 
 
 def gene_of(label):

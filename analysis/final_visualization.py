@@ -122,7 +122,7 @@ GRAPH_TYPE_DISPLAY_LABELS: dict[str, str] = {
     "ModMultiOmics": "MultiOmics",
     "ModOncogene": "Oncogene",
 }
-COMMON_ROBUSTNESS_DATASET_SEEDS: tuple[int, ...] = (17, 45, 48, 50, 69, 73, 75, 100, 123, 156, 220, 235, 306, 400, 601)
+COMMON_ROBUSTNESS_DATASET_SEEDS: tuple[int, ...] = (19, 47, 50, 52, 71, 75, 77, 102, 125, 158, 222, 237, 308, 402, 603)
 DEFAULT_ROBUSTNESS_FAMILIES: tuple[str, ...] = (
     "20nodes_ER_obsconf0_latconf0_Non_Gaussian_Mixed",
     "20nodes_ModMultiOmics_obsconf0_latconf0_Laplace_Mixed",

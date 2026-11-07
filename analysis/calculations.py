@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 import result_tables as th
+from synthetic_data import sample_path
 import final_visualization as fv
 from metrics import compute_metrics, existence_auprc, directed_auprc
 from statistical_methods import holm, paired_scope
@@ -25,7 +26,7 @@ def calculate_priors():
     with np.load(ROOT / 'results/prism/priors/search_estimates.npz', allow_pickle=False) as estimates:
         for family in config['families']:
             for seed in config['search_dataset_seeds']:
-                with np.load(ROOT / 'datasets/synthetic' / f'{family}__seed_{int(seed)}.npz', allow_pickle=False) as observations:
+                with np.load(sample_path(family, seed, study="model_selection"), allow_pickle=False) as observations:
                     truth = observations['true_adj']
                 prefix = f'{family}__seed_{seed}__'
                 values = {name: estimates[prefix + name] for name in ('r_G', 'r_H_raw', 'r_H_z', 'd_binary', 'd_binary_z', 'd_bootstrap', 'd_bootstrap_z')}
@@ -65,7 +66,7 @@ def calculate_tuning():
             for key in matrices.files:
                 family, identity = key.split('__ds')
                 ds, ms = map(int, identity.split('__ms'))
-                with np.load(ROOT / 'datasets/synthetic' / f'{family}__seed_{int(ds)}.npz', allow_pickle=False) as data:
+                with np.load(sample_path(family, ds, study="model_selection"), allow_pickle=False) as data:
                     truth = data['true_adj']
                     labels = [f'X{i}' for i in range(data['X'].shape[1])]
                 graph = (np.abs(matrices[key]) > threshold).astype(int)
@@ -88,7 +89,7 @@ def calculate_tuning():
     orders = []
     for row in scores.itertuples(index=False):
         family, seed = (row.dataset, int(row.dataset_seed))
-        with np.load(ROOT / 'datasets/synthetic' / f'{family}__seed_{int(seed)}.npz', allow_pickle=False) as d:
+        with np.load(sample_path(family, seed), allow_pickle=False) as d:
             truth = d['true_adj']
         with np.load(th.PRIORS / f'{family}__seed_{seed}.npz', allow_pickle=False) as d:
             order = d['order']
@@ -221,36 +222,22 @@ def calculate_benchmark():
     return {'benchmark_rank_table': benchmark_rank_table, 'benchmark_f1': benchmark_f1, 'benchmark_coverage': benchmark_coverage, 'tuned_table': tuned_table, 'tuned_ranks': tuned_ranks, 'tuned_scope_ranks': tuned_scope_ranks, 'runtime_tables': runtime_tables, 'coverage_tables': coverage_tables, 'metrics_summary': metrics_summary, 'coverage': coverage, 'model_summary': model_summary, 'dataset_summary': dataset_summary, 'model_seed': model_seed, 'dataset_seed': dataset_seed, 'metric_summaries': metric_summaries, 'size_tables': size_tables, 'model_order': model_order}
 
 
-def calculate_control():
-    """Summarize the Gaussian-linear control and comparative benchmark measurements."""
-    control = pd.concat([pd.read_csv(path, low_memory=False, float_precision='round_trip') for path in sorted((ROOT / 'results/benchmark/control').glob('*.csv'))], ignore_index=True)
-    reference = th.load_final_results()['benchmark_with_biological']
-    reference = reference.loc[reference.dataset.eq('20nodes_ER_obsconf0_latconf0_Gaussian_Linear')]
-    control['setting'] = 'High variance Gaussian'
-    reference['setting'] = 'Gaussian'
-    runs = pd.concat([reference, control], ignore_index=True)
-    blocks = runs.loc[runs.status.eq('finished')].groupby(['setting', 'model', 'dataset_seed']).f1.mean().reset_index()
-    summary = blocks.groupby(['setting', 'model']).f1.agg(['mean', 'std', 'size']).reset_index()
-    wide = summary.pivot(index='model', columns='setting', values='mean')
-    return {'summary': summary, 'wide': wide}
-
-
 def calculate_sortability():
     """Calculate sortability, associations and available sorting-baseline scores."""
     def sortability(frame, study):
         rows = []
         for family, seed in frame[['dataset', 'dataset_seed']].drop_duplicates().itertuples(index=False, name=None):
-            path = ROOT / 'datasets/synthetic' / f'{family}__seed_{int(seed)}.npz'
+            path = sample_path(family, seed, study=study)
             with np.load(path, allow_pickle=False) as data:
                 raw = 'X_raw' in data.files
                 result = calculate_varsortability(data['X_raw'] if raw else data['X'], data['true_adj'])
                 if not raw:
                     for key in ('varsortability', 'n_ordered_variance_paths', 'n_tied_variance_paths'):
                         result[key] = np.nan
-            rows.append(dict(dataset=family, dataset_seed=seed, study=study, raw_variance_available=raw, sample_path=str(path.relative_to(ROOT)), **result))
+            rows.append(dict(dataset=family, dataset_seed=seed, study=study, raw_variance_available=raw, **result))
         return pd.DataFrame(rows)
     sources = th.load_final_results()
-    frames = [('benchmark', th.prepare_metrics(pd.concat([th.load_graph_size_results(), th.load_final_results()['benchmark_with_biological']], ignore_index=True))), ('tuned_untuned', sources['complete'])]
+    frames = [('benchmark', th.prepare_metrics(pd.concat([th.load_graph_size_results(), sources['benchmark_with_biological']], ignore_index=True))), ('tuned_untuned', sources['complete'])]
     sort_tables, correlations = ([], [])
     for study, frame in frames:
         values = sortability(frame, study)

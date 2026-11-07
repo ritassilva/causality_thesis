@@ -1,7 +1,4 @@
-"""Fit one model on a stored sample and save predictions and metrics.
-
-Called by benchmark.py and tuning.py.
-"""
+"""Fit one model and save predictions and metrics."""
 
 import argparse
 import json
@@ -18,14 +15,15 @@ sys.path[:0] = [str(ROOT / "runs"), str(ROOT / "analysis")]
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sample", type=Path)
-    parser.add_argument("--study", choices=["benchmark", "benchmark_control", "evaluation", "model_selection", "scalability", "ablation", "sachs", "tcga"])
+    parser.add_argument("--sample", type=Path, required=True, help="Input NPZ file")
+    parser.add_argument("--study", required=True, choices=["benchmark", "evaluation", "model_selection", "scalability", "ablation", "sachs", "tcga"])
     parser.add_argument("--condition")
     parser.add_argument("--dataset-seed", type=int, help="Required for conditions with multiple dataset seeds")
     parser.add_argument("--model", default="PRISM")
     parser.add_argument("--model-seed", type=int, default=0)
     parser.add_argument("--arm", choices=["tuned", "untuned"], default="tuned")
-    parser.add_argument("--priors", choices=["auto", "stored", "recompute"], default="auto")
+    parser.add_argument("--priors", choices=["auto", "stored", "recompute"], default="recompute")
+    parser.add_argument("--golem-init", type=Path, help="EV initialization fitted on this input for GOLEM-NV")
     parser.add_argument("--threshold-grid", nargs="+", type=float, help="Score saved weights at each threshold after one fit")
     parser.add_argument("--params", type=Path, help="Explicit parameter JSON for a baseline")
     parser.add_argument(
@@ -40,30 +38,13 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
-    if args.sample is not None and (args.study is not None or args.condition is not None):
-        parser.error("Choose --sample or --study/--condition")
-    if args.sample is None and not (args.study and args.condition):
-        parser.error("Provide --sample or --study and --condition")
-    if args.sample:
-        resolved = args.sample.resolve()
-        if resolved.parent == (ROOT / "datasets/synthetic").resolve():
-            args.study, args.condition = "evaluation", resolved.stem.rsplit("__seed_", 1)[0]
-            file_seed = int(resolved.stem.rsplit("__seed_", 1)[1])
-            if args.dataset_seed is not None and args.dataset_seed != file_seed:
-                parser.error("--dataset-seed disagrees with the sample filename")
-            args.dataset_seed = file_seed
-        for study, folder in {"sachs": "sachs", "tcga": "tcga"}.items():
-            if resolved.parent == (ROOT / "datasets" / folder).resolve():
-                args.study, args.condition = study, resolved.stem
-                break
-        input_path = args.sample
-    else:
-        if args.study in {"sachs", "tcga"}:
-            input_path = ROOT / "datasets" / args.study / f"{args.condition}.npz"
-        else:
-            if args.dataset_seed is None:
-                parser.error("Synthetic data require --dataset-seed")
-            input_path = ROOT / "datasets/synthetic" / f"{args.condition}__seed_{args.dataset_seed}.npz"
+    input_path = args.sample.expanduser().resolve()
+    if not input_path.is_file():
+        parser.error(f"Input sample not found: {input_path}")
+    if args.condition is None:
+        args.condition = input_path.stem.rsplit("__seed_", 1)[0]
+    if args.study not in {"sachs", "tcga"} and args.dataset_seed is None:
+        parser.error("Synthetic runs require an explicit --dataset-seed identifier")
     with np.load(input_path, allow_pickle=False) as sample:
         X = np.asarray(sample["X"], float)
         truth = np.asarray(sample["true_adj"]) if "true_adj" in sample else None
@@ -142,18 +123,11 @@ def main():
                 args.model
             ]
             config = {"params": params, "threshold": None}
-        if (
-            args.model == "GOLEM"
-            and params.get("equal_variances") is False
-            and "b_init_path" not in params
-            and args.study in {"benchmark", "benchmark_control", "evaluation", "model_selection", "ablation", "scalability"}
-        ):
-            family = args.condition or args.sample.stem.split("__seed_")[0]
-            dataset_seed = args.dataset_seed if args.dataset_seed is not None else int(args.sample.stem.split("__seed_")[1])
-            init = ROOT / f"results/tuned/golem_initialization/{family}/ds{dataset_seed}.npz"
-            if not init.exists():
-                raise FileNotFoundError(f"Frozen GOLEM EV initialization required: {init}")
-            params = dict(params, b_init_path=str(init))
+        if args.model == "GOLEM" and params.get("equal_variances") is False:
+            if args.golem_init:
+                params = dict(params, b_init_path=str(args.golem_init.resolve()))
+            if "b_init_path" not in params:
+                raise ValueError("GOLEM-NV requires --golem-init from an EV fit on the same input, or b_init_path in --params")
         prediction, continuous = run(args.model, X, labels, params)
         weights = None
     args.output.mkdir(parents=True)

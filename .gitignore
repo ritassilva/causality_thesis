@@ -24,3 +24,8 @@ dist/
 # Additional runs are kept separate from the submitted measurements
 results/new_runs/
 *.log
+
+# Observational inputs and local input-file manifests are not distributed
+datasets/
+*.samples.json
+tcga-work/

@@ -13,6 +13,7 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
+from synthetic_data import sample_path
 
 
 def _path_sortability(
@@ -162,6 +163,7 @@ def calculate_varsortability_table(
     *,
     project_root: str | Path | None = None,
     dataset_roots: Iterable[str | Path] | None = None,
+    study: str = "evaluation",
     ddof: int = 0,
     tie_tolerance: float = 1e-12,
 ) -> pd.DataFrame:
@@ -176,7 +178,7 @@ def calculate_varsortability_table(
         raise ValueError(f"datasets is missing required columns: {sorted(missing)}")
     root = _find_project_root(project_root)
     identities = (
-        datasets[["dataset_seed", "dataset"]]
+        datasets[["dataset_seed", "dataset"] + (["study"] if "study" in datasets else [])]
         .drop_duplicates()
         .sort_values(["dataset_seed", "dataset"], kind="stable")
     )
@@ -184,7 +186,7 @@ def calculate_varsortability_table(
     for identity in identities.itertuples(index=False):
         if dataset_roots is None:
 
-            data_path = root / "datasets/synthetic" / f"{identity.dataset}__seed_{int(identity.dataset_seed)}.npz"
+            data_path = sample_path(identity.dataset, identity.dataset_seed, study=getattr(identity, "study", study), project_root=root)
             with np.load(data_path, allow_pickle=False) as archive:
                 sample = {key: archive[key] for key in archive.files}
             if "X_raw" not in sample:
@@ -213,6 +215,7 @@ def calculate_varsortability_table(
             {
                 "dataset_seed": identity.dataset_seed,
                 "dataset": str(identity.dataset),
+                **({"study": identity.study} if hasattr(identity, "study") else {}),
                 **result,
                 "data_path": str(data_path),
                 "adjacency_path": str(adjacency_path),
@@ -226,6 +229,7 @@ def calculate_r2_sort_regress_table(
     *,
     project_root: str | Path | None = None,
     dataset_roots: Iterable[str | Path] | None = None,
+    study: str = "evaluation",
 ) -> pd.DataFrame:
     """Fit CausalDisco's R²-SortnRegress baseline and calculate directed F1.
 
@@ -246,7 +250,7 @@ def calculate_r2_sort_regress_table(
         raise ValueError(f"datasets is missing required columns: {sorted(missing)}")
     root = _find_project_root(project_root)
     identities = (
-        datasets[["dataset_seed", "dataset"]]
+        datasets[["dataset_seed", "dataset"] + (["study"] if "study" in datasets else [])]
         .drop_duplicates()
         .sort_values(["dataset_seed", "dataset"], kind="stable")
     )
@@ -254,7 +258,7 @@ def calculate_r2_sort_regress_table(
     for identity in identities.itertuples(index=False):
         if dataset_roots is None:
 
-            data_path = root / "datasets/synthetic" / f"{identity.dataset}__seed_{int(identity.dataset_seed)}.npz"
+            data_path = sample_path(identity.dataset, identity.dataset_seed, study=getattr(identity, "study", study), project_root=root)
             with np.load(data_path, allow_pickle=False) as archive:
                 sample = {key: archive[key] for key in archive.files}
             if "X_raw" not in sample:
@@ -309,6 +313,7 @@ def calculate_r2_sort_regress_table(
             {
                 "dataset_seed": identity.dataset_seed,
                 "dataset": str(identity.dataset),
+                **({"study": identity.study} if hasattr(identity, "study") else {}),
                 "model": "R²-SortnRegress",
                 "precision": precision,
                 "recall": recall,

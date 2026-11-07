@@ -102,7 +102,7 @@ def _load_labels() -> dict[str, list[str]]:
         ordered = []
         for subtype in SUBTYPES:
             dataset = f"{base}__{subtype}"
-            with np.load(find_project_root() / "datasets/tcga" / f"{dataset}.npz", allow_pickle=False) as observations:
+            with np.load(find_project_root() / "results/tcga/priors" / f"{dataset}.npz", allow_pickle=False) as observations:
                 labels[dataset] = list(map(str, observations["col_names"]))
             for label in labels[dataset]:
                 if label not in ordered:
@@ -1255,7 +1255,7 @@ def strict_reference_precision_summary(
     because the strict file contains no mutation--mutation relations.
     """
     arm = resolve_models((model,))[0]
-    path = bundle.project_root / "datasets/tcga/references/phased_relations_glioma_rna_final.csv"
+    path = bundle.project_root / "references/tcga/phased_relations_glioma_rna_final.csv"
     strict = pd.read_csv(path)
     suffix = {"mut": MUTATION_SUFFIX, "expr": EXPRESSION_SUFFIX}
     all_reference_edges = {
@@ -1312,7 +1312,7 @@ def strict_reference_recovery_summary(
     dataset only when both variables are present, and it is recovered only
     when the graph contains the arrow in the same direction.
     """
-    path = bundle.project_root / "datasets/tcga/references/phased_relations_glioma_rna_final.csv"
+    path = bundle.project_root / "references/tcga/phased_relations_glioma_rna_final.csv"
     strict = pd.read_csv(path)
     suffix = {"mut": MUTATION_SUFFIX, "expr": EXPRESSION_SUFFIX}
     reference = [

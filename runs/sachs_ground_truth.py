@@ -40,6 +40,9 @@ CANONICAL_EDGES: tuple[tuple[str, str], ...] = (
     ("Raf", "Mek"),
 )
 
+REFERENCE_LABELS = ("Raf", "Mek", "Plcg", "PIP2", "PIP3", "Erk", "Akt", "PKA", "PKC", "P38", "Jnk")
+
+
 N_CANONICAL_EDGES = len(CANONICAL_EDGES)
 
 
@@ -88,6 +91,7 @@ def build_true_adj(
 
 __all__ = [
     "canonical_label",
+    "REFERENCE_LABELS",
     "CANONICAL_EDGES",
     "N_CANONICAL_EDGES",
     "edge_set",

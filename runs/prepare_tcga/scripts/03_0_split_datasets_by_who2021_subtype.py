@@ -1,29 +1,13 @@
-"""Split the three final TCGA glioma datasets by WHO 2021 subtype.
-
-Source: 06_causal_input_mutation_plus_log2_tpm.tsv (665 participants), with the
-subtype read from 07_participant_annotations.tsv (GBM=1 -> glioblastoma,
-ASTRO=1 -> astrocytoma, both 0 -> oligodendroglioma).
-
-The three datasets are the same column selections as the TCGA experiment:
-  mut_expr70  all 35 *_mut + 35 *_expr_log2tpm columns
-  mut35       the *_mut columns only
-  expr35      the *_expr_log2tpm columns only
-
-Writes, for each dataset, the full version (all 665) and one file per subtype
-into ../subtype_splits/. Columns are never dropped; columns that become
-constant inside a subtype are listed in subtype_splits/summary.tsv.
-The source files are only read.
-"""
+"""Split TCGA modality datasets by WHO 2021 subtype."""
 
 import csv
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3] / "datasets/tcga/preparation"
-SOURCE_DIR = Path(os.environ.get("TCGA_COHORT_DIR", ROOT / "cohort"))
-SOURCE = SOURCE_DIR / "06_causal_input_mutation_plus_log2_tpm.tsv"
-ANNOTATIONS = SOURCE_DIR / "07_participant_annotations.tsv"
-OUT = Path(os.environ.get("TCGA_SUBTYPE_DIR", ROOT / "subtypes_regenerated"))
+SOURCE_DIR = None
+SOURCE = None
+ANNOTATIONS = None
+OUT = None
 
 DATASETS = {
     "mut_expr70": lambda c: c.endswith("_mut") or c.endswith("_expr_log2tpm"),
@@ -51,6 +35,13 @@ def subtype_of(gbm, astro):
 
 
 def main():
+    global SOURCE_DIR, SOURCE, ANNOTATIONS, OUT
+    if not os.environ.get("TCGA_COHORT_DIR") or not os.environ.get("TCGA_SUBTYPE_DIR"):
+        raise ValueError("Set TCGA_COHORT_DIR and TCGA_SUBTYPE_DIR, or use runs/prepare_tcga/prepare.py --work-dir /path/to/tcga-work")
+    SOURCE_DIR = Path(os.environ["TCGA_COHORT_DIR"])
+    SOURCE = SOURCE_DIR / "06_causal_input_mutation_plus_log2_tpm.tsv"
+    ANNOTATIONS = SOURCE_DIR / "07_participant_annotations.tsv"
+    OUT = Path(os.environ["TCGA_SUBTYPE_DIR"])
     columns, data = read_tsv(SOURCE)
     ann_columns, annotations = read_tsv(ANNOTATIONS)
     gbm, astro = ann_columns.index("GBM"), ann_columns.index("ASTRO")

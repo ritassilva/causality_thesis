@@ -1,7 +1,4 @@
-"""Plan or explicitly execute benchmark fits on stored final samples.
-
-Planning is the default. Stored result directories are not overwritten.
-"""
+"""Plan or execute benchmark fits."""
 
 import argparse
 import json
@@ -11,12 +8,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "analysis"))
+from synthetic_data import configure_samples, sample_path
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--study", type=lambda value: {"main": "benchmark", "final": "tuned"}.get(value, value),
-                        choices=["benchmark", "tuned", "control"], default="tuned")
+                        choices=["benchmark", "tuned"], default="tuned")
+    parser.add_argument("--samples", type=Path, required=True, help="JSON sample-file manifest")
     parser.add_argument("--nodes", type=int, help="Restrict benchmark graph size; omit for all stored sizes")
     parser.add_argument("--model", help="Restrict to one model identifier")
     parser.add_argument("--family", help="Restrict to one dataset family")
@@ -28,12 +27,11 @@ def main():
     parser.add_argument("--model-seed", type=int, action="append")
     parser.add_argument("--timeout", type=int, default=1800)
     args = parser.parse_args()
-    study = {"benchmark": "benchmark", "tuned": "evaluation", "control": "benchmark_control"}[args.study]
+    configure_samples(args.samples)
+    study = {"benchmark": "benchmark", "tuned": "evaluation"}[args.study]
     import pandas as pd
     if study == "evaluation":
         frame = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((ROOT / "results/tuned").glob("*.csv"))], ignore_index=True)
-    elif study == "benchmark_control":
-        frame = pd.concat([pd.read_csv(path, low_memory=False, float_precision="round_trip") for path in sorted((ROOT / "results/benchmark/control").glob("*.csv"))], ignore_index=True)
     else:
         frame = pd.concat(
             [pd.read_csv(path, low_memory=False, float_precision="round_trip")
@@ -52,7 +50,8 @@ def main():
     if args.model_seed and not set(args.model_seed).issubset(model_seeds):
         parser.error(f"--model-seed must belong to {model_seeds}")
     identities = ["dataset", "model", "arm", "dataset_seed"]
-    frame = frame[identities].drop_duplicates().merge(
+    metadata = [c for c in ("condition_id",) if c in frame]
+    frame = frame[identities + metadata].drop_duplicates(identities).merge(
         pd.DataFrame({"model_seed": model_seeds}), how="cross"
     )
     rows = frame.to_dict(orient="records")
@@ -73,7 +72,7 @@ def main():
             continue
         if args.model_seed and ms not in args.model_seed:
             continue
-        sample = ROOT / "datasets/synthetic" / f"{family}__seed_{seed}.npz"
+        sample = sample_path(family, seed, study=study)
         if not sample.is_file():
             raise FileNotFoundError(sample)
         tasks.append(
@@ -83,10 +82,13 @@ def main():
                 model=model,
                 model_seed=ms,
                 arm=arm,
-                sample=str(sample.relative_to(ROOT)),
+                sample=str(sample),
                 study=study,
             )
         )
+        for column in metadata:
+            if pd.notna(row[column]):
+                tasks[-1][column] = row[column]
     if not tasks:
         raise ValueError("No tasks match the selection")
     if args.output.exists():
@@ -126,6 +128,8 @@ def main():
         command = [
             sys.executable,
             str(ROOT / "runs/run_model.py"),
+            "--sample",
+            task["sample"],
             "--study",
             task["study"],
             "--condition",
@@ -141,6 +145,12 @@ def main():
             "--output",
             str(directory),
         ]
+        if task["model"] == "PRISM" and task["study"] == "evaluation":
+            command += ["--priors", "stored"]
+        if task["model"] == "GOLEM":
+            init = ROOT / f"results/tuned/golem_initialization/{task['dataset']}/ds{task['dataset_seed']}.npz"
+            if init.is_file():
+                command += ["--golem-init", str(init)]
         try:
             result = subprocess.run(command, capture_output=True, text=True, timeout=args.timeout)
             row = dict(
@@ -163,7 +173,15 @@ def main():
         except subprocess.TimeoutExpired:
             row = dict(task, status="timeout")
         outcomes.append(row)
-    pd.DataFrame(outcomes).assign(timed_out=lambda frame: frame.status.eq("timeout")).to_csv(args.output / "results.csv", index=False)
+    measurements = pd.DataFrame(outcomes).assign(timed_out=lambda frame: frame.status.eq("timeout"))
+    if study in {"benchmark", "evaluation"}:
+        # Keep public result CSVs compact; detailed diagnostics remain in
+        # per-fit metrics.json, run.json and execution.log.
+        columns = ["dataset", "model", "arm", "dataset_seed"]
+        columns += ["model_seed", "condition_id", "status", "timed_out", "n_nodes",
+                    "n_samples", "f1", "fbeta", "precision", "recall", "SHD", "runtime_seconds"]
+        measurements = measurements.reindex(columns=columns)
+    measurements.to_csv(args.output / "results.csv", index=False)
     if any(row["status"] != "finished" for row in outcomes):
         raise SystemExit("Some fits failed; inspect results.csv and per-fit execution.log")
 

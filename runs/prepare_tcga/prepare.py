@@ -1,9 +1,4 @@
-"""Recover the exact TCGA source files and optionally rebuild the cohort.
-
-Only Python's standard library and curl are needed for downloads. Processing
-requires Rscript with data.table, dplyr and stringr. The RNA stage uses the
-fixed file selection recorded for the cohort.
-"""
+"""Download and prepare the TCGA glioma cohort."""
 
 import argparse
 import hashlib
@@ -85,13 +80,41 @@ def run_r(script, env, rscript):
     subprocess.run([rscript, "--vanilla", str(HERE / script)], env=env, check=True)
 
 
+
+def export_model_inputs(work):
+    """Convert the verified TSV cohorts to model-ready NPZ inputs."""
+    import numpy as np
+    import pandas as pd
+
+    output = work / "model_inputs"
+    output.mkdir(exist_ok=True)
+    subtype_names = {"all": "", "astrocytoma": "__astro", "glioblastoma": "__gbm", "oligodendroglioma": "__oligo"}
+    for family in ("mut35", "expr35", "mut_expr70"):
+        for subtype, suffix in subtype_names.items():
+            frame = pd.read_csv(work / "subtype_splits" / f"{family}_{subtype}.tsv", sep="\t", index_col=0)
+            frame = frame.loc[:, frame.nunique(dropna=False).gt(1)]
+            raw = frame.to_numpy(dtype=float)
+            if not np.isfinite(raw).all():
+                raise ValueError(f"Non-finite observations in {family}/{subtype}")
+            scale = raw.std(axis=0, keepdims=True)
+            scale[scale == 0] = 1.0
+            labels = frame.columns.to_numpy(dtype=str)
+            kinds = np.array(["mutation" if label.endswith("_mut") else "expression" for label in labels])
+            genes = np.array([label.removesuffix("_mut").removesuffix("_expr_log2tpm") for label in labels])
+            np.savez_compressed(output / f"tcga_{family}{suffix}.npz", X=(raw - raw.mean(axis=0, keepdims=True)) / scale,
+                                X_raw=raw, col_names=labels, kinds=kinds, genes=genes,
+                                participants=frame.index.to_numpy(dtype=str), n_samples=len(frame), normalized=True)
+    print(f"Model inputs written to {output}", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", choices=["raw", "preprocess", "rna"], default="raw")
     parser.add_argument(
         "--work-dir",
         type=Path,
-        default=Path(os.environ.get("TCGA_WORK_DIR", ROOT / "results/new_runs/tcga_preparation")),
+        required=True,
+        help="Working and output directory",
     )
     parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--rscript", default="Rscript")
@@ -126,7 +149,7 @@ def main():
     metadata_dir = work / "tcga_rnaseq_selected_genes"
     metadata_dir.mkdir(exist_ok=True)
     for expected in config["metadata"]:
-        source = ROOT / "datasets/tcga/preparation/source_metadata" / expected["filename"]
+        source = ROOT / "configs/tcga/file_selection" / expected["filename"]
         require_hash(source, expected["sha256"])
         shutil.copyfile(source, metadata_dir / source.name)
     run_r("validate_tcga_dna_rna_sample_match.R", env, args.rscript)
@@ -150,6 +173,7 @@ def main():
             )
             for expected in config["expected_subtypes"]:
                 require_hash(work / expected["path"], expected["sha256"])
+            export_model_inputs(work)
             print(
                 "All seven cohort tables match the recorded study inputs byte for byte.",
                 flush=True,
