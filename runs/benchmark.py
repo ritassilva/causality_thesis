@@ -43,8 +43,7 @@ def main():
     frame["n_nodes"] = frame.n_nodes.fillna(pd.to_numeric(frame.dataset.str.extract(r"^(\d+)nodes", expand=False)))
     if args.nodes is not None:
         frame = frame.loc[frame.n_nodes.eq(args.nodes)]
-    # Every method uses the complete study seed range, including deterministic
-    # methods. Stored CSV rows select configurations, not the repetition count.
+    # Stored CSV rows select configurations
     protocol = json.loads((ROOT / "configs/experiment_protocol.json").read_text())
     model_seeds = protocol["model_seeds"][study]
     if args.model_seed and not set(args.model_seed).issubset(model_seeds):

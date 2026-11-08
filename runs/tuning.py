@@ -68,8 +68,6 @@ def evaluate(model, params, stage, settings, prism, directory, *, ev_winner=None
     for family in settings["families"]:
         for seed in settings[f"{stage}_dataset_seeds"]:
             source = sample_path(family, seed, study="model_selection" if stage in {"search", "validation"} else "evaluation")
-            # The full stage seed range applies to every method, including
-            # deterministic ones; no single-seed shortcut is used.
             for model_seed in settings[f"{stage}_model_seeds"]:
                 folder = directory / family / f"ds{seed}" / f"ms{model_seed}"
                 fit_config = fit_parameters(model, params, prism)
