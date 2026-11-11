@@ -1,9 +1,7 @@
 """PRISM model with the TCGA study's forbidden-edge constraint.
 
 For the joint mutation/expression representation, expression-to-mutation edges
-are excluded by the model specification. This is imposed through a binary
-weight mask rather than a finite regularization penalty.
-
+are excluded by the model specification. 
 The first-layer weights are indexed as [target, hidden, source]. Their masked
 squared norm defines A[source, target]. The forward calculation, acyclicity
 term, adaptive penalty and returned adjacency all use these masked weights.

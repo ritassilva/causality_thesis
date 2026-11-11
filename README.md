@@ -11,10 +11,10 @@ The 12 notebooks load prepared numerical results and display tables and inline f
 | Benchmark performance, paired rankings, coverage, runtime and metrics | [Performance](notebooks/benchmark/01_performance.ipynb) |
 | Noise, mechanisms, confounding, assumptions, seed stability, sortability and family details | [Sensitivity and stability](notebooks/benchmark/02_sensitivity_stability.ipynb) |
 | Graph sizes, scalability, completion and runtime | [Graph sizes and scalability](notebooks/benchmark/03_graph_sizes_scalability.ipynb) |
-| Tuned/untuned Test/OOD comparison, parameters and family details | [Final comparison](notebooks/tuned/01_comparison.ipynb) |
-| PRISM selection scores, held-out performance and causal order | [Tuning](notebooks/prism/tuning.ipynb) |
+| Tuned/untuned Test/OOD F0.5 comparison | [Final comparison](notebooks/tuned/01_comparison.ipynb) |
+| PRISM selected parameters and held-out performance | [Tuning](notebooks/prism/tuning.ipynb) |
 | PRISM numerical convergence and trajectories by family | [Convergence](notebooks/prism/convergence.ipynb) |
-| Existence and direction priors, representations and mixtures | [Prior quality](notebooks/prism/priors.ipynb) |
+| Existence and direction priors, mixtures and causal-order errors | [Prior quality](notebooks/prism/priors.ipynb) |
 | PRISM component contributions | [Ablation](notebooks/prism/ablation.ipynb) |
 | Sachs performance, metrics and reference network | [Sachs](notebooks/sachs/01_comparison.ipynb) |
 | TCGA reference relationships, candidate edges and threshold sensitivity | [Biological relationships](notebooks/tcga/01_biological.ipynb) |
@@ -45,7 +45,7 @@ results/
 ├── analysis/              Prepared numerical notebook tables and arrays
 ├── benchmark/             Per-condition benchmark measurements
 ├── tuned/                 Per-condition tuned/untuned measurements
-├── prism/                 Selection, priors, ablation and convergence results
+├── prism/                 Priors, ablation and convergence results
 ├── scalability/           Dedicated scalability measurements
 ├── sachs/                 Sachs model measurements
 └── tcga/
@@ -63,11 +63,12 @@ requirements-*.txt         Python dependency specifications
 
 ## Data inputs
 
-Observational datasets, downloaded source data and intermediate cohort tables are not distributed in this repository. Synthetic datasets were generated with [CausalGen](https://github.com/ritassilva/causalgen), whose model-environment version is recorded in `requirements-models.txt`. Use CausalGen to generate inputs for new experiments. 
+Synthetic datasets were generated with [CausalGen](https://github.com/ritassilva/causalgen), whose model-environment version is recorded in `requirements-models.txt`. Use CausalGen to generate inputs for the experiments. 
 
-Sachs observations originate from the CD3/CD28 dataset; its 17-arc reference network and variable names are defined in `runs/sachs_ground_truth.py`. TCGA source acquisition and processing are retained in `runs/prepare_tcga/`, with pinned sources in `configs/tcga_sources.json` and the fixed GDC file selection in `configs/tcga/file_selection/`. Only the eight selected thesis relationships are retained in `references/tcga/`. TCGA variable names are read from the existing prior results rather than from observations.
+Sachs observations originate from the CD3/CD28 dataset; its 17-arc reference network and variable names are defined in `runs/sachs_ground_truth.py`. TCGA source acquisition and processing are retained in `runs/prepare_tcga/`, with pinned sources in `configs/tcga_sources.json` and the fixed GDC file selection in `configs/tcga/file_selection/`. Only the eight selected thesis relationships are retained in `references/tcga/`. 
 
 The comparative measurements are stored once per condition in `results/benchmark/` and `results/tuned/`. The shared per-fit result fields are listed below. `dataset_seed` applies only to synthetic datasets and is omitted from Sachs and TCGA results; `model_seed` identifies algorithm runs on each fixed observational dataset.
+
 
 ```text
 dataset,model,arm,dataset_seed,model_seed,condition_id,status,timed_out,n_nodes,n_samples,f1,fbeta,precision,recall,SHD,runtime_seconds
@@ -77,7 +78,7 @@ dataset,model,arm,dataset_seed,model_seed,condition_id,status,timed_out,n_nodes,
 
 ## Numerical preparation and figures
 
-`analysis/calculations.py` contains the numerical preparation functions. `runs/calculate_results.py` executes them and saves the outputs under `results/analysis/`. The `.pkl` bundles contain tables and arrays, preserving their types and indices; they contain no figures. They are included for notebook presentation. Running notebooks does not recalculate them. Sections based on saved measurements can be regenerated independently, for example:
+`analysis/calculations.py` contains the numerical preparation functions. `runs/calculate_results.py` executes them and saves the outputs under `results/analysis/`. The `.pkl` bundles contain tables and arrays, preserving their types and indices. Sections based on saved measurements can be regenerated independently, for example:
 
 ```bash
 python runs/calculate_results.py --section scalability
@@ -93,13 +94,11 @@ Calling the command without `--section` recalculates all sections and therefore 
 
 Numerical preparation includes graph-score evaluation, uncertainty summaries, paired statistical comparisons and the sorting baseline. The analysis dependency versions used for this preparation and notebook execution are pinned in `requirements-analysis.txt`.
 
-Notebooks load per-fit measurements directly from the source CSVs; no additional source-data bundle is stored. Calculated Wilcoxon and Friedman results are kept in `statistics.pkl`.  Visualization functions are in `analysis/final_visualization.py`, `analysis/glioma_analysis.py` and `analysis/prism_convergence_figure.py`. Study-specific layouts also appear directly in notebook.
+Calculated Wilcoxon and Friedman results are kept in `statistics.pkl`.  Visualization functions are in `analysis/final_visualization.py`, `analysis/glioma_analysis.py` and `analysis/prism_convergence_figure.py`. 
 
 ## Statistical comparison workbook
 
-`results/analysis/pvalues.xlsx` organizes the recorded Wilcoxon and Friedman results by dataset and configuration. It includes benchmark, tuned and untuned comparisons, pooled Test/OOD scopes, tuned-versus-untuned comparisons and PRISM ablations. The sheets retain the original p-values and the available Holm-adjusted p-values, with the number of paired blocks and test statistic. The index identifies every sheet and the recorded exclusions.
-
-The workbook is a static export of `results/analysis/statistics.pkl`, containing 8,778 between-method Wilcoxon comparisons, 84 Friedman results, 252 tuned-versus-untuned comparisons and 13 ablation comparisons. Exporting these tables does not rerun the statistical tests. The statistics notebook displays rankings and coverage rather than p-value tables.
+`results/analysis/pvalues.xlsx` organizes the recorded Wilcoxon and Friedman results by dataset and configuration. It includes benchmark, tuned and untuned comparisons, pooled Test/OOD scopes, tuned-versus-untuned comparisons and PRISM ablations. The sheets retain the original p-values and the available Holm-adjusted p-values, with the number of paired blocks and test statistic. The index identifies every sheet and the recorded exclusions. The statistics notebook displays rankings and coverage rather than p-value tables.
 
 ## Model runs and configurations
 
@@ -147,9 +146,10 @@ Both commands plan by default; add `--execute` to run the methods. They retain t
 | Search, validation, held-out evaluation and ablation | 0–4 |
 | Dedicated scalability study | 0–2 |
 
+
 ## Obtain and prepare TCGA inputs
 
-The complete acquisition and preparation pipeline remains in `runs/prepare_tcga/`: source downloads and checksum verification, mutation and clinical processing, gene selection, WHO 2021 classification, RNA acquisition and transformation, DNA/RNA matching, subtype splitting and model-input export. Install the model-run Python dependencies and the R dependencies using `runs/prepare_tcga/install_dependencies.R`.
+The complete acquisition and preparation pipeline remains in `runs/prepare_tcga/`: source downloads and checksum verification, mutation and clinical processing, gene selection, WHO 2021 classification, RNA acquisition and transformation, DNA/RNA matching and subtype splitting. Install the Python dependencies and the R dependencies using `runs/prepare_tcga/install_dependencies.R`.
 
 Choose a working location explicitly:
 

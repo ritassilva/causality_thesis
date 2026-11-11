@@ -165,5 +165,5 @@
     249
   ],
   "model": "PRISM",
-  "results": "Final selected-model results are stored in results/prism/tuning/ and results/tuned/."
+  "results": "Final selected-model measurements are stored in results/tuned/; held-out summaries are stored in results/analysis/tuning.pkl. Search and validation scores are not retained."
 }

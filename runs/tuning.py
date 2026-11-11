@@ -1,7 +1,7 @@
 """Run a resumable search, validation and held-out evaluation on final datasets.
 
 Planning is the default. --execute runs fits in a new output directory; --resume
-continues the same study. One PRISM study has the configured total trial budget.
+continues the same study.
 """
 
 import argparse

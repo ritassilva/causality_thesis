@@ -58,30 +58,13 @@ def calculate_priors():
 
 
 def calculate_tuning():
-    """Evaluate saved PRISM predictions and summarize selection and held-out performance."""
-    fits = []
-    recorded = pd.concat([pd.read_csv(path, low_memory=False, float_precision='round_trip') for path in sorted((ROOT / 'results/prism/tuning').glob('*.csv'))], ignore_index=True)
-    for stage, name, threshold in [('search', 'search_trial_0068.npz', 0.25), ('validation', 'validation_candidate_0068.npz', 0.1)]:
-        with np.load(ROOT / 'results/prism/tuning/predictions' / name, allow_pickle=False) as matrices:
-            for key in matrices.files:
-                family, identity = key.split('__ds')
-                ds, ms = map(int, identity.split('__ms'))
-                with np.load(sample_path(family, ds, study="model_selection"), allow_pickle=False) as data:
-                    truth = data['true_adj']
-                    labels = [f'X{i}' for i in range(data['X'].shape[1])]
-                graph = (np.abs(matrices[key]) > threshold).astype(int)
-                np.fill_diagonal(graph, 0)
-                row = compute_metrics(truth, graph, labels)
-                p, r = (row['precision'], row['recall'])
-                row['fbeta'] = 1.25 * p * r / (0.25 * p + r) if 0.25 * p + r else 0.0
-                identity_row = recorded.loc[recorded.dataset.eq(family) & recorded.condition_id.eq(stage) & recorded.dataset_seed.eq(ds) & recorded.model_seed.eq(ms)].iloc[0].to_dict()
-                fits.append(dict(**{key: value for key, value in identity_row.items() if key not in row and key not in ('dataset', 'dataset_seed', 'model_seed')}, stage=stage, dataset=family, dataset_seed=ds, model_seed=ms, threshold=threshold, **row))
+    """Summarize PRISM held-out performance and causal-order associations."""
     sources = th.load_final_results()
     complete = sources['complete']
     final = complete.loc[complete.model.eq('PRISM') & complete.dataset.isin(th.TEST_FAMILIES)].copy()
     final['stage'] = 'test'
     final['threshold'] = 0.1
-    stages = pd.concat([pd.DataFrame(fits), final], ignore_index=True)
+    stages = final
     blocks = stages.groupby(['stage', 'dataset', 'dataset_seed']).fbeta.mean().reset_index()
     macro = blocks.groupby(['stage', 'dataset_seed']).fbeta.mean().reset_index()
     stage_summary = macro.groupby('stage').fbeta.agg(['mean', 'std', 'size']).reset_index()

@@ -449,21 +449,15 @@ def ablation_table() -> pd.DataFrame:
     rows = []
     for condition in order:
         condition_summary = summary.loc[condition]
-        row = {
+        difference = comparisons.get(condition, {})
+        rows.append({
             "Condition": labels[condition],
-            "$F_{0.5}$": f"${condition_summary['fbeta']:.3f} \\pm {condition_summary['fbeta_sd']:.3f}$",
-        }
-        if condition == "full":
-            row.update({"Loss": "--", "95\\% CI": "--"})
-        else:
-            difference = comparisons[condition]
-            row.update(
-                {
-                    "Loss": f"${difference['loss']:.3f}$",
-                    "95\\% CI": f"$[{difference['ci_low']:.3f},\\,{difference['ci_high']:.3f}]$",
-                }
-            )
-        rows.append(row)
+            "F0.5 mean": float(condition_summary["fbeta"]),
+            "F0.5 SD": float(condition_summary["fbeta_sd"]),
+            "Loss": difference.get("loss", np.nan),
+            "95% CI lower": difference.get("ci_low", np.nan),
+            "95% CI upper": difference.get("ci_high", np.nan),
+        })
     return pd.DataFrame(rows)
 
 

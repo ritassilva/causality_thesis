@@ -1,4 +1,4 @@
-"""Calculate and save numerical notebook results; figures stay in notebooks."""
+"""Calculate and save numerical notebook results."""
 import argparse
 from pathlib import Path
 import sys

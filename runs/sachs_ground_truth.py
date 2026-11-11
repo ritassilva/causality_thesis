@@ -1,4 +1,4 @@
-"""Variable aliases and the 17-arc reference graph for the Sachs dataset."""
+""" reference graph for the Sachs dataset."""
 
 from __future__ import annotations
 
