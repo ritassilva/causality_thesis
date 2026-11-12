@@ -64,11 +64,12 @@ def fit_parameters(model, params, prism):
 
 def evaluate(model, params, stage, settings, prism, directory, *, ev_winner=None):
     thresholds = settings["threshold_grid"]
+    model_seeds = prism["model_seeds"] if model == "PRISM" and stage in {"search", "validation"} else settings[f"{stage}_model_seeds"]
     rows = []
     for family in settings["families"]:
         for seed in settings[f"{stage}_dataset_seeds"]:
             source = sample_path(family, seed, study="model_selection" if stage in {"search", "validation"} else "evaluation")
-            for model_seed in settings[f"{stage}_model_seeds"]:
+            for model_seed in model_seeds:
                 folder = directory / family / f"ds{seed}" / f"ms{model_seed}"
                 fit_config = fit_parameters(model, params, prism)
                 if stage == "test" and len(thresholds) == 1:
@@ -152,7 +153,9 @@ def choose_threshold(frame, require_complete=False, require_acyclic=False):
         means = group.groupby(["dataset", "dataset_seed"]).fbeta.mean().groupby("dataset").mean()
         value = float(means.mean())
         candidates.append(dict(threshold=None if pd.isna(threshold) else float(threshold), value=value,
-                               per_family={key: float(val) for key, val in means.items()}))
+                               per_family={key: float(val) for key, val in means.items()},
+                               acyclic_graphs=int((group.status.eq("finished") & group.is_acyclic.fillna(False).astype(bool)).sum()),
+                               fit_coverage=int(group.status.eq("finished").sum())))
     return max(candidates, key=lambda value: value["value"]) if candidates else None
 
 
@@ -211,12 +214,19 @@ def run_study(model, variant, settings, prism, spec, *, ev_winner=None):
     for trial in candidates:
         params = trial.user_attrs["fit_params"]
         frame = evaluate(model, params, "validation", settings, prism, directory / "validation" / f"trial_{trial.number:04d}", ev_winner=ev_winner)
-        result = choose_threshold(frame, require_complete=True, require_acyclic=model == "PRISM")
+        result = choose_threshold(frame, require_complete=model == "PRISM", require_acyclic=model == "PRISM")
         if result:
-            selected.append(dict(params=params, threshold=result["threshold"], validation_value=result["value"], source_trial=trial.number))
+            selected.append(dict(params=params, threshold=result["threshold"], validation_value=result["value"],
+                                 acyclic_graphs=result["acyclic_graphs"], fit_coverage=result["fit_coverage"],
+                                 source_trial=trial.number))
     if not selected:
         raise RuntimeError(f"No admissible validation candidate for {model}/{variant}")
-    winner = max(selected, key=lambda row: row["validation_value"])
+    if model == "PRISM":
+        winner = max(selected, key=lambda row: row["validation_value"])
+    else:
+        best_value = max(row["validation_value"] for row in selected)
+        near_best = [row for row in selected if best_value - row["validation_value"] <= 0.01]
+        winner = max(near_best, key=lambda row: (row["acyclic_graphs"], row["fit_coverage"], row["validation_value"]))
     write_json(directory / "winner.json", winner)
     return winner
 
@@ -255,7 +265,8 @@ def main():
             spec["trials"] = args.trials
     if not args.execute:
         print(json.dumps(dict(models=models, specifications=specs, families=baseline["families"],
-                              search_model_seeds=baseline["search_model_seeds"], validation_model_seeds=baseline["validation_model_seeds"],
+                              search_model_seeds={model: prism["model_seeds"] if model == "PRISM" else baseline["search_model_seeds"] for model in models},
+                              validation_model_seeds={model: prism["model_seeds"] if model == "PRISM" else baseline["validation_model_seeds"] for model in models},
                               test_model_seeds=baseline["test_model_seeds"]), indent=2))
         return
     configuration = dict(samples=json.loads(args.samples.read_text()), samples_manifest=str(args.samples.resolve()), settings=baseline, prism=prism, specifications=specs, models=models, skip_test=args.skip_test, variant=args.variant)
